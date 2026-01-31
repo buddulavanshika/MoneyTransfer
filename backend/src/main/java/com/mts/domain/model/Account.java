@@ -118,7 +118,9 @@ public class Account {
     }
 
     private static BigDecimal normalizeNonNegative(BigDecimal value, String field) {
-        Objects.requireNonNull(value, field + " cannot be null");
+        if (value == null) {
+            throw new IllegalArgumentException(field + " cannot be null");
+        }
         BigDecimal scaled = value.setScale(2, RoundingMode.HALF_UP);
         if (scaled.signum() < 0) {
             throw new IllegalArgumentException(field + " must be >= 0.00");
@@ -127,7 +129,9 @@ public class Account {
     }
 
     private static BigDecimal normalizePositive(BigDecimal value, String field) {
-        Objects.requireNonNull(value, field + " cannot be null");
+        if (value == null) {
+            throw new IllegalArgumentException(field + " cannot be null");
+        }
         BigDecimal scaled = value.setScale(2, RoundingMode.HALF_UP);
         if (scaled.signum() <= 0) {
             throw new IllegalArgumentException(field + " must be > 0.00");

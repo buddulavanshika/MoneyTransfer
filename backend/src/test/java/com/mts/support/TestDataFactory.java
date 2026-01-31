@@ -1,15 +1,12 @@
 package com.mts.support;
 
 import com.mts.domain.enums.AccountStatus;
-import com.mts.domain.util.Money;
 import com.mts.domain.model.Account;
+import com.mts.domain.util.Money;
 
 import java.math.BigDecimal;
 import java.util.Currency;
 
-/**
- * Utility to build consistent test data across test classes.
- */
 public final class TestDataFactory {
 
     private TestDataFactory() {}
@@ -17,7 +14,7 @@ public final class TestDataFactory {
     public static final Currency USD = Currency.getInstance("USD");
 
     public static Money money(double amount) {
-        return Money.of(amount, USD);
+        return Money.of(BigDecimal.valueOf(amount), USD);
     }
 
     public static Money money(BigDecimal amount) {
@@ -25,24 +22,19 @@ public final class TestDataFactory {
     }
 
     public static Account activeAccount(Long id, BigDecimal balance) {
-        return buildAccount(id, "ACC-" + id, balance, AccountStatus.ACTIVE);
+        return buildAccount(String.valueOf(id), "ACC-" + id, balance, AccountStatus.ACTIVE);
     }
 
     public static Account lockedAccount(Long id, BigDecimal balance) {
-        return buildAccount(id, "ACC-" + id, balance, AccountStatus.LOCKED);
+        return buildAccount(String.valueOf(id), "ACC-" + id, balance, AccountStatus.LOCKED);
     }
 
     public static Account closedAccount(Long id, BigDecimal balance) {
-        return buildAccount(id, "ACC-" + id, balance, AccountStatus.CLOSED);
+        return buildAccount(String.valueOf(id), "ACC-" + id, balance, AccountStatus.CLOSED);
     }
 
-    public static Account buildAccount(Long id, String holderName, BigDecimal balance, AccountStatus status) {
-        Account a = new Account();
-        a.setId(id);
-        a.setHolderName(holderName);
-        a.setBalance(balance);
-        a.setStatus(status);
-        return a;
+    public static Account buildAccount(String id, String holderName, BigDecimal balance, AccountStatus status) {
+        // IMPORTANT: pass BigDecimal if Account expects BigDecimal
+        return new Account(id, holderName, balance, status);
     }
 }
-``

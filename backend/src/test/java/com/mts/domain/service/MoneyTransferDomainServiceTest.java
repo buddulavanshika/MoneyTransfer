@@ -32,7 +32,7 @@ class MoneyTransferDomainServiceTest {
     void testTransfer_HappyPath() {
         Account from = activeAccount(1L, new BigDecimal("1000.00"));
         Account to   = activeAccount(2L, new BigDecimal("400.00"));
-        Money amount = money(200.00);
+        Money amount = money(new BigDecimal("200.00"));
 
         TransactionLog log = service.transfer(from, to, amount, "IDEMP-001");
 
@@ -54,7 +54,7 @@ class MoneyTransferDomainServiceTest {
     @DisplayName("Same account transfer should fail with IllegalArgumentException")
     void testTransfer_SameAccount() {
         Account acc = activeAccount(1L, new BigDecimal("1000.00"));
-        Money amount = money(50.00);
+        Money amount = money(new BigDecimal("50.00"));
 
         assertThrows(IllegalArgumentException.class,
                 () -> service.transfer(acc, acc, amount, "IDEMP-002"));
@@ -67,7 +67,7 @@ class MoneyTransferDomainServiceTest {
         Account to   = activeAccount(2L, new BigDecimal("400.00"));
 
         assertThrows(AccountNotActiveException.class,
-                () -> service.transfer(from, to, money(100.00), "IDEMP-003"));
+                () -> service.transfer(from, to, money(new BigDecimal("100.00")), "IDEMP-003"));
     }
 
     @Test
@@ -77,46 +77,44 @@ class MoneyTransferDomainServiceTest {
         Account to   = closedAccount(2L, new BigDecimal("400.00"));
 
         assertThrows(AccountNotActiveException.class,
-                () -> service.transfer(from, to, money(100.00), "IDEMP-004"));
+                () -> service.transfer(from, to, money(new BigDecimal("100.00")), "IDEMP-004"));
     }
 
     @Test
     @DisplayName("Null accounts should map to AccountNotFoundException")
     void testTransfer_NullAccounts() {
-        Account from = null;
-        Account to   = activeAccount(2L, new BigDecimal("400.00"));
-
+        // First case: null source
+        final Account to1 = activeAccount(2L, new BigDecimal("400.00"));
         assertThrows(AccountNotFoundException.class,
-                () -> service.transfer(from, to, money(50.00), "IDEMP-005"));
+                () -> service.transfer(null, to1, money(new BigDecimal("50.00")), "IDEMP-005"));
 
-        from = activeAccount(1L, new BigDecimal("1000.00"));
-        to   = null;
-
+        // Second case: null destination
+        final Account from2 = activeAccount(1L, new BigDecimal("1000.00"));
         assertThrows(AccountNotFoundException.class,
-                () -> service.transfer(from, to, money(50.00), "IDEMP-006"));
+                () -> service.transfer(from2, null, money(new BigDecimal("50.00")), "IDEMP-006"));
     }
 
     @Test
     @DisplayName("Zero or negative amounts should fail validation")
     void testTransfer_InvalidAmount() {
-        Account from = activeAccount(1L, new BigDecimal("1000.00"));
-        Account to   = activeAccount(2L, new BigDecimal("400.00"));
+        final Account from = activeAccount(1L, new BigDecimal("1000.00"));
+        final Account to   = activeAccount(2L, new BigDecimal("400.00"));
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.transfer(from, to, money(0.00), "IDEMP-007"));
+                () -> service.transfer(from, to, money(new BigDecimal("0.00")), "IDEMP-007"));
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.transfer(from, to, money(-10.00), "IDEMP-008"));
+                () -> service.transfer(from, to, money(new BigDecimal("-10.00")), "IDEMP-008"));
     }
 
     @Test
     @DisplayName("Insufficient balance should throw InsufficientBalanceException and not credit receiver")
     void testTransfer_InsufficientFunds() {
-        Account from = activeAccount(1L, new BigDecimal("100.00"));
-        Account to   = activeAccount(2L, new BigDecimal("400.00"));
+        final Account from = activeAccount(1L, new BigDecimal("100.00"));
+        final Account to   = activeAccount(2L, new BigDecimal("400.00"));
 
         assertThrows(InsufficientBalanceException.class,
-                () -> service.transfer(from, to, money(150.00), "IDEMP-009"));
+                () -> service.transfer(from, to, money(new BigDecimal("150.00")), "IDEMP-009"));
 
         // Balances unchanged
         assertEquals(0, new BigDecimal("100.00").compareTo(from.getBalance()));
@@ -126,22 +124,22 @@ class MoneyTransferDomainServiceTest {
     @Test
     @DisplayName("Idempotency: second call with same key should fail with DuplicateTransferException")
     void testTransfer_DuplicateIdempotencyKey() {
-        Account from = activeAccount(1L, new BigDecimal("1000.00"));
-        Account to   = activeAccount(2L, new BigDecimal("400.00"));
+        final Account from = activeAccount(1L, new BigDecimal("1000.00"));
+        final Account to   = activeAccount(2L, new BigDecimal("400.00"));
 
-        service.transfer(from, to, money(50.00), "IDEMP-010");
+        service.transfer(from, to, money(new BigDecimal("50.00")), "IDEMP-010");
 
         assertThrows(DuplicateTransferException.class,
-                () -> service.transfer(from, to, money(50.00), "IDEMP-010"));
+                () -> service.transfer(from, to, money(new BigDecimal("50.00")), "IDEMP-010"));
     }
 
     @Test
     @DisplayName("Overload without idempotency key should still succeed")
     void testTransfer_AutoIdempotencyOverload() {
-        Account from = activeAccount(1L, new BigDecimal("1000.00"));
-        Account to   = activeAccount(2L, new BigDecimal("400.00"));
+        final Account from = activeAccount(1L, new BigDecimal("1000.00"));
+        final Account to   = activeAccount(2L, new BigDecimal("400.00"));
 
-        TransactionLog log = service.transfer(from, to, money(75.00));
+        TransactionLog log = service.transfer(from, to, money(new BigDecimal("75.00")));
 
         assertNotNull(log);
         assertEquals(TransactionStatus.SUCCESS, log.getStatus());

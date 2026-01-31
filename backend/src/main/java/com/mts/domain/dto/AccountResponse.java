@@ -1,5 +1,8 @@
 package com.mts.domain.dto;
 
+import java.math.BigDecimal;
+import java.util.Objects;
+
 /**
  * Placeholder for AccountResponse (Module 2).
  */
@@ -32,7 +35,8 @@ public class AccountResponse {
         this.balance = balance;
         this.status = status;
     }
-    //Getters and setters
+
+    // Getters and setters
 
     public Long getId() {
         return id;
@@ -66,15 +70,30 @@ public class AccountResponse {
         this.status = status;
     }
 
-
     @Override
     public String toString() {
         return "AccountResponse{" +
-                "AccountId='" + id + '\'' +
-                ", HolderName='" + holderName + '\'' +
+                "id=" + id +
+                ", holderName='" + holderName + '\'' +
                 ", balance=" + balance +
                 ", status='" + status + '\'' +
                 '}';
     }
-}
 
+    // (Optional) Useful for collections/comparisons
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AccountResponse)) return false;
+        AccountResponse that = (AccountResponse) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(holderName, that.holderName) &&
+                Objects.equals(balance, that.balance) &&
+                Objects.equals(status, that.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, holderName, balance, status);
+    }
+}

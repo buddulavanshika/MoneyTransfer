@@ -1,1 +1,4 @@
-com\mts\AppTest.class
+com\mts\domain\service\MoneyTransferDomainServiceTest.class
+com\mts\support\TestDataFactory.class
+com\mts\domain\dto\TransferRequestValidationTest.class
+com\mts\domain\model\AccountTest.class

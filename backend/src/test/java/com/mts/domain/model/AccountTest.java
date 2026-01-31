@@ -1,66 +1,107 @@
 package com.mts.domain.model;
 
 import com.mts.domain.enums.AccountStatus;
-import com.mts.domain.exceptions.InsufficientBalanceException;
-import com.mts.domain.util.Money;
+import com.mts.support.TestDataFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.Currency;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static com.mts.support.TestDataFactory.*;
 
 class AccountTest {
 
     @Test
-    @DisplayName("debit(): should reduce balance when sufficient funds")
-    void testDebit_Success() {
-        Account acc = activeAccount(1L, new BigDecimal("1000.00"));
-        Money amount = money(200.00);
-
-        acc.debit(amount);
-
-        assertEquals(0, new BigDecimal("800.00").compareTo(acc.getBalance()),
-                "Balance should be 800.00 after debiting 200.00 from 1000.00");
+    @DisplayName("Constructor should normalize opening balance to scale=2 (HALF_UP) and default to ACTIVE when using convenience ctor")
+    void constructorNormalizesAndDefaultsActive() {
+        Account a = new Account("A-1", "Alice", new BigDecimal("100.1")); // -> 100.10
+        assertEquals("A-1", a.getId());
+        assertEquals("Alice", a.getHolderName());
+        assertEquals(AccountStatus.ACTIVE, a.getStatus());
+        assertEquals(0, a.getBalance().compareTo(new BigDecimal("100.10")));
     }
 
     @Test
-    @DisplayName("debit(): should throw InsufficientBalanceException when funds are not enough")
-    void testDebit_InsufficientBalance() {
-        Account acc = activeAccount(1L, new BigDecimal("500.00"));
-        Money amount = money(1200.00);
-
-        InsufficientBalanceException ex = assertThrows(InsufficientBalanceException.class, () -> acc.debit(amount));
-        assertTrue(ex.getMessage() == null || ex.getMessage().toLowerCase().contains("insufficient"),
-                "Exception message should indicate insufficient funds");
-
-        // Balance must remain unchanged on failed debit
-        assertEquals(0, new BigDecimal("500.00").compareTo(acc.getBalance()));
+    @DisplayName("Constructor with explicit status should set status and normalize opening balance")
+    void constructorWithStatus() {
+        Account a = new Account("B-1", "Bob", new BigDecimal("50.555"), AccountStatus.LOCKED); // -> 50.56
+        assertEquals(AccountStatus.LOCKED, a.getStatus());
+        assertEquals(0, a.getBalance().compareTo(new BigDecimal("50.56")));
     }
 
     @Test
-    @DisplayName("credit(): should increase balance correctly")
-    void testCredit_Success() {
-        Account acc = activeAccount(2L, new BigDecimal("1000.00"));
-        Money amount = money(300.00);
+    @DisplayName("credit(BigDecimal) should increase balance and normalize to 2 decimals")
+    void creditIncreasesBalance() {
+        Account a = new Account("C-1", "Carol", new BigDecimal("10.00")); // ACTIVE
 
-        acc.credit(amount);
-
-        assertEquals(0, new BigDecimal("1300.00").compareTo(acc.getBalance()),
-                "Balance should be 1300.00 after crediting 300.00 to 1000.00");
+        a.credit(new BigDecimal("2.345")); // normalize to 2.35
+        assertEquals(0, a.getBalance().compareTo(new BigDecimal("12.35")));
     }
 
     @Test
-    @DisplayName("isActive(): returns true only when status is ACTIVE")
-    void testIsActive() {
-        Account a1 = activeAccount(1L, new BigDecimal("100.00"));
-        Account a2 = lockedAccount(2L, new BigDecimal("100.00"));
-        Account a3 = closedAccount(3L, new BigDecimal("100.00"));
+    @DisplayName("debit(BigDecimal) should decrease balance and normalize to 2 decimals")
+    void debitDecreasesBalance() {
+        Account a = new Account("D-1", "Dave", new BigDecimal("25.00")); // ACTIVE
+        a.debit(new BigDecimal("5.499")); // normalize to 5.50
+        assertEquals(0, a.getBalance().compareTo(new BigDecimal("19.50")));
+    }
 
-        assertTrue(a1.isActive());
-        assertFalse(a2.isActive());
-        assertFalse(a3.isActive());
+    @Test
+    @DisplayName("debit(BigDecimal) should throw for insufficient funds")
+    void debitInsufficientFunds() {
+        Account a = new Account("E-1", "Eve", new BigDecimal("10.00")); // ACTIVE
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> a.debit(new BigDecimal("10.01")));
+        assertTrue(ex.getMessage().contains("Insufficient balance"));
+    }
+
+    @Test
+    @DisplayName("credit/debit require ACTIVE status")
+    void operationsRequireActive() {
+        Account locked = new Account("L-1", "Leo", new BigDecimal("10.00"), AccountStatus.LOCKED);
+        assertThrows(IllegalStateException.class, () -> locked.credit(new BigDecimal("1.00")));
+        assertThrows(IllegalStateException.class, () -> locked.debit(new BigDecimal("1.00")));
+
+        Account closed = new Account("X-1", "Xena", new BigDecimal("10.00"), AccountStatus.CLOSED);
+        assertThrows(IllegalStateException.class, () -> closed.credit(new BigDecimal("1.00")));
+        assertThrows(IllegalStateException.class, () -> closed.debit(new BigDecimal("1.00")));
+    }
+
+    @Test
+    @DisplayName("setStatus should update status and bump version/timestamp")
+    void setStatusBumpsVersionAndTimestamp() {
+        Account a = new Account("S-1", "Sam", new BigDecimal("10.00"));
+        long v1 = a.getVersion();
+        var t1 = a.getLastUpdated();
+
+        a.setStatus(AccountStatus.LOCKED);
+
+        assertEquals(AccountStatus.LOCKED, a.getStatus());
+        assertTrue(a.getVersion() > v1, "Version should increment");
+        assertTrue(a.getLastUpdated().isAfter(t1), "Timestamp should update");
+    }
+
+    @Test
+    @DisplayName("Helper from TestDataFactory should produce ACTIVE account with String id and normalized balance")
+    void factoryActiveAccount() {
+        // Uses your TestDataFactory which converts Long -> String and passes BigDecimal
+        Account a = TestDataFactory.activeAccount(100L, new BigDecimal("30.1"));
+
+        assertEquals("100", a.getId());
+        assertEquals("ACC-100", a.getHolderName());
+        assertEquals(AccountStatus.ACTIVE, a.getStatus());
+        assertEquals(0, a.getBalance().compareTo(new BigDecimal("30.10")));
+    }
+
+    @Test
+    @DisplayName("credit/debit should reject non-positive amounts")
+    void nonPositiveAmountsRejected() {
+        Account a = new Account("N-1", "Nina", new BigDecimal("10.00"));
+        assertThrows(IllegalArgumentException.class, () -> a.credit(null));
+        assertThrows(IllegalArgumentException.class, () -> a.debit(null));
+        assertThrows(IllegalArgumentException.class, () -> a.credit(new BigDecimal("0.00")));
+        assertThrows(IllegalArgumentException.class, () -> a.debit(new BigDecimal("0.00")));
+        assertThrows(IllegalArgumentException.class, () -> a.credit(new BigDecimal("-1.00")));
+        assertThrows(IllegalArgumentException.class, () -> a.debit(new BigDecimal("-1.00")));
     }
 }

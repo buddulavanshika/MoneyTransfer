@@ -10,7 +10,6 @@ import com.mts.domain.model.Account;
 import com.mts.domain.model.TransactionLog;
 import com.mts.domain.util.Money;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
@@ -19,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Pure domain service that orchestrates money transfer using domain rules.
- * <p>
- * Responsibilities:
+ *
+ * <p>Responsibilities:
  * <ul>
  *   <li>Validate inputs (accounts, status, amount)</li>
  *   <li>Enforce idempotency (in-memory for Module 2)</li>
@@ -28,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>Return a SUCCESS {@link TransactionLog} on completion</li>
  * </ul>
  *
- * Notes:
+ * <p>Notes:
  * <ul>
  *   <li>Failures are represented via domain exceptions; this service does not create failure logs.</li>
  *   <li>In Module 3, idempotency should be persisted (e.g., DB unique constraint) and the service
@@ -48,14 +47,14 @@ public class MoneyTransferDomainService {
      *
      * @param from           Source account (must be ACTIVE)
      * @param to             Destination account (must be ACTIVE)
-     * @param amount         Money to transfer (must be &gt; 0)
+     * @param amount         Money to transfer (must be > 0)
      * @param idempotencyKey Unique key per request; must not repeat
      * @return Success {@link TransactionLog}
      *
-     * @throws AccountNotFoundException   if any account is null
-     * @throws AccountNotActiveException  if any account is not ACTIVE
-     * @throws IllegalArgumentException   if accounts are same or amount invalid or key blank
-     * @throws DuplicateTransferException if idempotency key was already used
+     * @throws AccountNotFoundException     if any account is null
+     * @throws AccountNotActiveException    if any account is not ACTIVE
+     * @throws IllegalArgumentException     if accounts are same or amount invalid or key blank
+     * @throws DuplicateTransferException   if idempotency key was already used
      * @throws InsufficientBalanceException if source balance is insufficient (thrown by debit)
      */
     public TransactionLog transfer(Account from, Account to, Money amount, String idempotencyKey) {
@@ -63,19 +62,20 @@ public class MoneyTransferDomainService {
         enforceIdempotency(idempotencyKey);
 
         // Business sequence: debit first (may throw), then credit
-        from.debit(amount);
-        to.credit(amount);
+        // Expecting Account.debit/credit to accept BigDecimal:
+        from.debit(amount.getAmount());
+        to.credit(amount.getAmount());
 
         // Build success transaction log
         TransactionLog log = new TransactionLog();
-        log.setId(UUID.randomUUID());
+        log.setId(UUID.randomUUID().toString());   // setId(String)
         log.setFromAccountId(from.getId());
         log.setToAccountId(to.getId());
-        log.setAmount(amount.getAmount());  // BigDecimal
+        log.setAmount(amount.getAmount());         // setAmount(BigDecimal)
         log.setStatus(TransactionStatus.SUCCESS);
         log.setFailureReason(null);
         log.setIdempotencyKey(idempotencyKey);
-        log.setCreatedOn(Timestamp.from(Instant.now()));
+        log.setCreatedOn(Instant.now());           // setCreatedOn(Instant)
 
         return log;
     }
