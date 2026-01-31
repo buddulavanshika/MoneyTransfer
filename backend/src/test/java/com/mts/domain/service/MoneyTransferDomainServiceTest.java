@@ -1,4 +1,4 @@
-package src.test.java.com.mts.domain.service;
+package com.mts.domain.service;
 
 /**
  * Placeholder for MoneyTransferDomainServiceTest (Module 2).

@@ -1,4 +1,4 @@
-package src.test.java.com.mts.support;
+package com.mts.support;
 
 /**
  * Placeholder for TestDataFactory (Module 2).
