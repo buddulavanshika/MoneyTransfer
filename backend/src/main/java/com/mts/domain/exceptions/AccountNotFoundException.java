@@ -4,5 +4,7 @@ package com.mts.domain.exceptions;
  * Placeholder for AccountNotFoundException (Module 2).
  */
 public class AccountNotFoundException {
-    // TODO: implement
+    public AccountNotFoundException(String message) {
+        super(message);
+    }
 }
