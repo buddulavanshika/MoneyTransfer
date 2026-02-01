@@ -1,22 +1,20 @@
 package com.mts.domain.exceptions;
 
-import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+public class AccountNotActiveException extends RuntimeException {
 
-class AccountNotActiveExceptionTest {
-
-    @Test
-    void testExceptionMessage() {
-        String message = "Account is not active";
-        AccountNotActiveException exception = new AccountNotActiveException(message);
-
-        assertEquals(message, exception.getMessage());
+    public AccountNotActiveException(String message) {
+        super(message);
     }
 
-    @Test
-    void testExceptionInheritance() {
-        AccountNotActiveException exception = new AccountNotActiveException("Test");
-        assertTrue(exception instanceof RuntimeException);
+    public AccountNotActiveException(String message) {
+        super(message);
     }
+
+    public AccountNotActiveException(String message, Throwable cause) {
+
+        super(message, cause);
+
+    }
+
 }

@@ -1,10 +1,20 @@
 package com.mts.domain.exceptions;
 
-/**
- * Placeholder for InsufficientBalanceException (Module 2).
- */
 public class InsufficientBalanceException extends RuntimeException {
+
+    public InsufficientBalanceException() {
+        super("Insufficient balance");
+    }
+
     public InsufficientBalanceException(String message) {
         super(message);
+    }
+
+    public InsufficientBalanceException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public InsufficientBalanceException(Throwable cause) {
+        super(cause);
     }
 }
