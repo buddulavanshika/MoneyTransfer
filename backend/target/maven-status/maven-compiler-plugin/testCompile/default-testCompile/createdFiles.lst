@@ -1,5 +1,9 @@
 com\mts\domain\util\MoneyTest.class
+com\mts\domain\dto\TransferResponseTest.class
 com\mts\domain\service\MoneyTransferDomainServiceTest.class
-com\mts\support\TestDataFactory.class
+com\mts\domain\dto\AccountResponseTest.class
+com\mts\domain\dto\ErrorResponseTest.class
 com\mts\domain\dto\TransferRequestValidationTest.class
+com\mts\domain\model\TransactionLogTest.class
+com\mts\support\TestDataFactory.class
 com\mts\domain\model\AccountTest.class
