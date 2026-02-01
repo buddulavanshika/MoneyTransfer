@@ -1,59 +1,69 @@
 package com.mts.domain.dto;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
-public class TransferRequestValidationTest{
+import static org.junit.jupiter.api.Assertions.*;
 
-    @NotNull
-    private Long fromAccountId;
+class TransferRequestValidationTest {
 
-    @NotNull
-    private Long toAccountId;
+    private Validator validator;
 
-    @NotNull
-    @DecimalMin(value = "0.01") // amount must be > 0
-    private BigDecimal amount;
-
-    @NotBlank
-    private String idempotencyKey;
-
-    public TransferRequestValidationTest() {
+    @BeforeEach
+    void setup() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
     }
 
+    @Test
+    void validRequestShouldPassValidation() {
+        TransferRequest req = new TransferRequest();
+        req.setFromAccountId(1L);
+        req.setToAccountId(2L);
+        req.setAmount(new BigDecimal("10.00"));
+        req.setIdempotencyKey("idem-123");
 
-    public Long getFromAccountId() {
-        return fromAccountId;
+        Set<ConstraintViolation<TransferRequest>> violations =
+                validator.validate(req);
+
+        assertTrue(violations.isEmpty());
     }
 
-    public void setFromAccountId(Long fromAccountId) {
-        this.fromAccountId = fromAccountId;
+    @Test
+    void nullAmountShouldFailValidation() {
+        TransferRequest req = new TransferRequest();
+        req.setFromAccountId(1L);
+        req.setToAccountId(2L);
+        req.setAmount(null);
+        req.setIdempotencyKey("idem-123");
+
+        Set<ConstraintViolation<TransferRequest>> violations =
+                validator.validate(req);
+
+        assertFalse(violations.isEmpty());
     }
 
-    public Long getToAccountId() {
-        return toAccountId;
-    }
+    @Test
+    void amountLessThanMinimumShouldFail() {
+        TransferRequest req = new TransferRequest();
+        req.setFromAccountId(1L);
+        req.setToAccountId(2L);
+        req.setAmount(new BigDecimal("0.00"));
+        req.setIdempotencyKey("idem-123");
 
-    public void setToAccountId(Long toAccountId) {
-        this.toAccountId = toAccountId;
-    }
+        Set<ConstraintViolation<TransferRequest>> violations =
+                validator.validate(req);
 
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public String getIdempotencyKey() {
-        return idempotencyKey;
-    }
-
-    public void setIdempotencyKey(String idempotencyKey) {
-        this.idempotencyKey = idempotencyKey;
+        assertTrue(
+            violations.stream()
+                .anyMatch(v -> v.getPropertyPath().toString().equals("amount"))
+        );
     }
 }
