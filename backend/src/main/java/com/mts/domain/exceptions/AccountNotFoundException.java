@@ -3,6 +3,7 @@ package com.mts.domain.exceptions;
 public class AccountNotFoundException extends RuntimeException {
 
     public AccountNotFoundException() {
+
         super();
     }
 
@@ -11,6 +12,8 @@ public class AccountNotFoundException extends RuntimeException {
     }
 
     public AccountNotFoundException(String message, Throwable cause) {
+
         super(message, cause);
+
     }
 }
