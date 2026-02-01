@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.167" tests="9" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.mts.domain.model.TransactionLogTest" time="0.025" tests="7" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -56,13 +56,11 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="61.0"/>
   </properties>
-  <testcase name="testTransfer_AutoIdempotencyOverload" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.141"/>
-  <testcase name="testTransfer_SameAccount" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.002"/>
-  <testcase name="testTransfer_InactiveDestination" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.002"/>
-  <testcase name="testTransfer_DuplicateIdempotencyKey" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.001"/>
-  <testcase name="testTransfer_InvalidAmount" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.001"/>
-  <testcase name="testTransfer_HappyPath" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.001"/>
-  <testcase name="testTransfer_InactiveSource" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.001"/>
-  <testcase name="testTransfer_InsufficientFunds" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.002"/>
-  <testcase name="testTransfer_NullAccounts" classname="com.mts.domain.service.MoneyTransferDomainServiceTest" time="0.002"/>
+  <testcase name="canHandleNullsGracefully" classname="com.mts.domain.model.TransactionLogTest" time="0.001"/>
+  <testcase name="bigDecimalReferenceIsStoredAsIs_scaleSensitiveEquals" classname="com.mts.domain.model.TransactionLogTest" time="0.001"/>
+  <testcase name="allArgsConstructorShouldInitializeAllFields" classname="com.mts.domain.model.TransactionLogTest" time="0.003"/>
+  <testcase name="mutationScenario_shouldReflectChanges" classname="com.mts.domain.model.TransactionLogTest" time="0.001"/>
+  <testcase name="noArgsConstructorShouldInitializeToNulls" classname="com.mts.domain.model.TransactionLogTest" time="0.003"/>
+  <testcase name="toStringShouldContainKeyFields" classname="com.mts.domain.model.TransactionLogTest" time="0.001"/>
+  <testcase name="settersShouldUpdateFields" classname="com.mts.domain.model.TransactionLogTest" time="0.006"/>
 </testsuite>
