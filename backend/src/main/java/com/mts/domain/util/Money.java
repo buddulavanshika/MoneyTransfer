@@ -76,6 +76,7 @@ public final class Money implements Comparable<Money>, Serializable {
 
     public Money multiply(BigDecimal multiplier) {
         Objects.requireNonNull(multiplier, "Multiplier must not be null");
+        // normalize is applied in the constructor
         return new Money(this.amount.multiply(multiplier), this.currency);
     }
 
@@ -123,6 +124,7 @@ public final class Money implements Comparable<Money>, Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+        // Use Java 16 pattern matching if available; otherwise keep classic instanceof + cast
         if (!(o instanceof Money money)) return false;
         return amount.equals(money.amount) && currency.equals(money.currency);
     }

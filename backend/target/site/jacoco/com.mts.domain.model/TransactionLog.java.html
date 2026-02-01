@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionLog.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">com.mts.domain.model</a> &gt; <span class="el_source">TransactionLog.java</span></div><h1>TransactionLog.java</h1><pre class="source lang-java linenums">package com.mts.domain.model;
+
+import com.mts.domain.enums.TransactionStatus;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+
+/**
+ * Domain record representing the result of a transfer.
+ *
+ * This class is a simple data container with no business methods,
+ * per Module 2 requirements.
+ */
+public class TransactionLog {
+
+    private String id;
+    private String fromAccountId;
+    private String toAccountId;
+
+    private BigDecimal amount;
+
+    private TransactionStatus status;
+    private String failureReason;
+
+    private String idempotencyKey;
+    private Instant createdOn;
+
+    // ----- Constructors -----
+
+<span class="fc" id="L30">    public TransactionLog() {</span>
+        // No-arg constructor
+<span class="fc" id="L32">    }</span>
+
+    public TransactionLog(String id,
+                          String fromAccountId,
+                          String toAccountId,
+                          BigDecimal amount,
+                          TransactionStatus status,
+                          String failureReason,
+                          String idempotencyKey,
+<span class="nc" id="L41">                          Instant createdOn) {</span>
+<span class="nc" id="L42">        this.id = id;</span>
+<span class="nc" id="L43">        this.fromAccountId = fromAccountId;</span>
+<span class="nc" id="L44">        this.toAccountId = toAccountId;</span>
+<span class="nc" id="L45">        this.amount = amount;</span>
+<span class="nc" id="L46">        this.status = status;</span>
+<span class="nc" id="L47">        this.failureReason = failureReason;</span>
+<span class="nc" id="L48">        this.idempotencyKey = idempotencyKey;</span>
+<span class="nc" id="L49">        this.createdOn = createdOn;</span>
+<span class="nc" id="L50">    }</span>
+
+    // ----- Getters &amp; Setters -----
+
+    public String getId() {
+<span class="fc" id="L55">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="fc" id="L59">        this.id = id;</span>
+<span class="fc" id="L60">    }</span>
+
+    public String getFromAccountId() {
+<span class="fc" id="L63">        return fromAccountId;</span>
+    }
+
+    public void setFromAccountId(String fromAccountId) {
+<span class="fc" id="L67">        this.fromAccountId = fromAccountId;</span>
+<span class="fc" id="L68">    }</span>
+
+    public String getToAccountId() {
+<span class="fc" id="L71">        return toAccountId;</span>
+    }
+
+    public void setToAccountId(String toAccountId) {
+<span class="fc" id="L75">        this.toAccountId = toAccountId;</span>
+<span class="fc" id="L76">    }</span>
+
+    public BigDecimal getAmount() {
+<span class="fc" id="L79">        return amount;</span>
+    }
+
+    public void setAmount(BigDecimal amount) {
+<span class="fc" id="L83">        this.amount = amount;</span>
+<span class="fc" id="L84">    }</span>
+
+    public TransactionStatus getStatus() {
+<span class="fc" id="L87">        return status;</span>
+    }
+
+    public void setStatus(TransactionStatus status) {
+<span class="fc" id="L91">        this.status = status;</span>
+<span class="fc" id="L92">    }</span>
+
+    public String getFailureReason() {
+<span class="fc" id="L95">        return failureReason;</span>
+    }
+
+    public void setFailureReason(String failureReason) {
+<span class="fc" id="L99">        this.failureReason = failureReason;</span>
+<span class="fc" id="L100">    }</span>
+
+    public String getIdempotencyKey() {
+<span class="fc" id="L103">        return idempotencyKey;</span>
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+<span class="fc" id="L107">        this.idempotencyKey = idempotencyKey;</span>
+<span class="fc" id="L108">    }</span>
+
+    public Instant getCreatedOn() {
+<span class="fc" id="L111">        return createdOn;</span>
+    }
+
+    public void setCreatedOn(Instant createdOn) {
+<span class="fc" id="L115">        this.createdOn = createdOn;</span>
+<span class="fc" id="L116">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AccountResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">com.mts.domain.dto</a> &gt; <span class="el_source">AccountResponse.java</span></div><h1>AccountResponse.java</h1><pre class="source lang-java linenums">package com.mts.domain.dto;
+
+import java.math.BigDecimal;
+import java.util.Objects;
+
+/**
+ * Placeholder for AccountResponse (Module 2).
+ */
+public class AccountResponse {
+    private Long id;
+    private String holderName;
+    private BigDecimal balance;
+    private String status;
+
+<span class="nc" id="L15">    public AccountResponse() {</span>
+<span class="nc" id="L16">    }</span>
+
+<span class="nc" id="L18">    public AccountResponse(Long id, String holderName, BigDecimal balance, String status) {</span>
+<span class="nc" id="L19">        this.id = id;</span>
+<span class="nc" id="L20">        this.holderName = holderName;</span>
+<span class="nc" id="L21">        this.balance = balance;</span>
+<span class="nc" id="L22">        this.status = status;</span>
+<span class="nc" id="L23">    }</span>
+
+<span class="nc" id="L25">    public AccountResponse(Long id, String holderName) {</span>
+<span class="nc" id="L26">        this.id = id;</span>
+<span class="nc" id="L27">        this.holderName = holderName;</span>
+<span class="nc" id="L28">    }</span>
+
+<span class="nc" id="L30">    public AccountResponse(Long id) {</span>
+<span class="nc" id="L31">        this.id = id;</span>
+<span class="nc" id="L32">    }</span>
+
+<span class="nc" id="L34">    public AccountResponse(BigDecimal balance, String status) {</span>
+<span class="nc" id="L35">        this.balance = balance;</span>
+<span class="nc" id="L36">        this.status = status;</span>
+<span class="nc" id="L37">    }</span>
+
+    // Getters and setters
+
+    public Long getId() {
+<span class="nc" id="L42">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="nc" id="L46">        this.id = id;</span>
+<span class="nc" id="L47">    }</span>
+
+    public String getHolderName() {
+<span class="nc" id="L50">        return holderName;</span>
+    }
+
+    public void setHolderName(String holderName) {
+<span class="nc" id="L54">        this.holderName = holderName;</span>
+<span class="nc" id="L55">    }</span>
+
+    public BigDecimal getBalance() {
+<span class="nc" id="L58">        return balance;</span>
+    }
+
+    public void setBalance(BigDecimal balance) {
+<span class="nc" id="L62">        this.balance = balance;</span>
+<span class="nc" id="L63">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L66">        return status;</span>
+    }
+
+    public void setStatus(String status) {
+<span class="nc" id="L70">        this.status = status;</span>
+<span class="nc" id="L71">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L75">        return &quot;AccountResponse{&quot; +</span>
+                &quot;id=&quot; + id +
+                &quot;, holderName='&quot; + holderName + '\'' +
+                &quot;, balance=&quot; + balance +
+                &quot;, status='&quot; + status + '\'' +
+                '}';
+    }
+
+    // (Optional) Useful for collections/comparisons
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (this == o) return true;</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (!(o instanceof AccountResponse)) return false;</span>
+<span class="nc" id="L88">        AccountResponse that = (AccountResponse) o;</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        return Objects.equals(id, that.id) &amp;&amp;</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">                Objects.equals(holderName, that.holderName) &amp;&amp;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">                Objects.equals(balance, that.balance) &amp;&amp;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">                Objects.equals(status, that.status);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L97">        return Objects.hash(id, holderName, balance, status);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

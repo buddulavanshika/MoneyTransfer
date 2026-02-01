@@ -49,7 +49,7 @@ public class Account {
 
         if (this.balance.compareTo(normalized) < 0) {
             throw new IllegalStateException(
-                "Insufficient balance: attempted " + normalized + ", available " + balance
+                    "Insufficient balance: attempted " + normalized + ", available " + balance
             );
         }
 
@@ -86,14 +86,19 @@ public class Account {
     private void ensureActive() {
         if (!isActive()) {
             throw new IllegalStateException(
-                "Account " + id + " is not ACTIVE (status=" + status + ")"
+                    "Account " + id + " is not ACTIVE (status=" + status + ")"
             );
         }
     }
 
+    /** Ensure version increments and lastUpdated is strictly monotonic. */
     private void touch() {
         version++;
-        lastUpdated = Instant.now();
+        Instant now = Instant.now();
+        if (lastUpdated != null && !now.isAfter(lastUpdated)) {
+            now = lastUpdated.plusNanos(1); // ensure strictly increasing
+        }
+        lastUpdated = now;
     }
 
     // ---------- Getters ----------
@@ -106,7 +111,7 @@ public class Account {
         return holderName;
     }
 
-    /** Defensive copy */
+    /** Defensive scaling */
     public BigDecimal getBalance() {
         return balance.setScale(2, RoundingMode.HALF_UP);
     }

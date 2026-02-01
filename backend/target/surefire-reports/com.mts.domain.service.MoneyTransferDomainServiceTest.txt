@@ -1,21 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.mts.domain.service.MoneyTransferDomainServiceTest
 -------------------------------------------------------------------------------
-Tests run: 9, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.564 s <<< FAILURE! -- in com.mts.domain.service.MoneyTransferDomainServiceTest
-com.mts.domain.service.MoneyTransferDomainServiceTest.testTransfer_InsufficientFunds -- Time elapsed: 0.047 s <<< FAILURE!
-org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: <com.mts.domain.exceptions.InsufficientBalanceException> but was: <java.lang.IllegalStateException>
-	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:67)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
-	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
-	at com.mts.domain.service.MoneyTransferDomainServiceTest.testTransfer_InsufficientFunds(MoneyTransferDomainServiceTest.java:116)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-Caused by: java.lang.IllegalStateException: Insufficient balance: attempted 150.00, available 100.00
-	at com.mts.domain.model.Account.debit(Account.java:99)
-	at com.mts.domain.service.MoneyTransferDomainService.transfer(MoneyTransferDomainService.java:66)
-	at com.mts.domain.service.MoneyTransferDomainServiceTest.lambda$testTransfer_InsufficientFunds$7(MoneyTransferDomainServiceTest.java:117)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53)
-	... 6 more
-
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.208 s -- in com.mts.domain.service.MoneyTransferDomainServiceTest

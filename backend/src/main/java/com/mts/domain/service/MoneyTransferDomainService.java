@@ -55,27 +55,36 @@ public class MoneyTransferDomainService {
      * @throws AccountNotActiveException    if any account is not ACTIVE
      * @throws IllegalArgumentException     if accounts are same or amount invalid or key blank
      * @throws DuplicateTransferException   if idempotency key was already used
-     * @throws InsufficientBalanceException if source balance is insufficient (thrown by debit)
+     * @throws InsufficientBalanceException if source balance is insufficient (mapped here)
      */
     public TransactionLog transfer(Account from, Account to, Money amount, String idempotencyKey) {
         validateInputs(from, to, amount, idempotencyKey);
         enforceIdempotency(idempotencyKey);
 
-        // Business sequence: debit first (may throw), then credit
-        // Expecting Account.debit/credit to accept BigDecimal:
-        from.debit(amount.getAmount());
+        // Debit first; translate insufficient funds into the domain exception expected by tests
+        try {
+            from.debit(amount.getAmount());
+        } catch (IllegalStateException ex) {
+            // Only map the insufficient funds case; keep other IllegalStateExceptions as-is
+            if (ex.getMessage() != null && ex.getMessage().startsWith("Insufficient balance")) {
+                throw new InsufficientBalanceException(ex.getMessage());
+            }
+            throw ex;
+        }
+
+        // Credit only after a successful debit
         to.credit(amount.getAmount());
 
         // Build success transaction log
         TransactionLog log = new TransactionLog();
-        log.setId(UUID.randomUUID().toString());   // setId(String)
+        log.setId(UUID.randomUUID().toString());
         log.setFromAccountId(from.getId());
         log.setToAccountId(to.getId());
-        log.setAmount(amount.getAmount());         // setAmount(BigDecimal)
+        log.setAmount(amount.getAmount());
         log.setStatus(TransactionStatus.SUCCESS);
         log.setFailureReason(null);
         log.setIdempotencyKey(idempotencyKey);
-        log.setCreatedOn(Instant.now());           // setCreatedOn(Instant)
+        log.setCreatedOn(Instant.now());
 
         return log;
     }
