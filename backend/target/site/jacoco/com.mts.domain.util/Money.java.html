@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Money.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">com.mts.domain.util</a> &gt; <span class="el_source">Money.java</span></div><h1>Money.java</h1><pre class="source lang-java linenums">package com.mts.domain.util;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Currency;
+import java.util.Objects;
+
+/**
+ * Immutable Value Object representing monetary value.
+ *
+ * Design Principles:
+ * - Immutable and thread-safe
+ * - Currency-aware
+ * - Fixed scale (2) with banker’s rounding (HALF_EVEN)
+ * - No floating-point arithmetic
+ *
+ * Used in:
+ * - Account debit / credit logic
+ * - MoneyTransferDomainService
+ */
+public final class Money implements Comparable&lt;Money&gt;, Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public static final int SCALE = 2;
+<span class="fc" id="L29">    public static final RoundingMode ROUNDING_MODE = RoundingMode.HALF_EVEN;</span>
+
+    private final BigDecimal amount;
+    private final Currency currency;
+
+<span class="fc" id="L34">    private Money(BigDecimal amount, Currency currency) {</span>
+<span class="fc" id="L35">        this.amount = normalize(amount);</span>
+<span class="fc" id="L36">        this.currency = Objects.requireNonNull(currency, &quot;Currency must not be null&quot;);</span>
+<span class="fc" id="L37">    }</span>
+
+    /* ========= Factory Methods ========= */
+
+    public static Money of(BigDecimal amount, Currency currency) {
+<span class="fc" id="L42">        Objects.requireNonNull(amount, &quot;Amount must not be null&quot;);</span>
+<span class="fc" id="L43">        Objects.requireNonNull(currency, &quot;Currency must not be null&quot;);</span>
+<span class="fc" id="L44">        return new Money(amount, currency);</span>
+    }
+
+    public static Money of(double amount, Currency currency) {
+<span class="nc" id="L48">        return of(BigDecimal.valueOf(amount), currency);</span>
+    }
+
+    public static Money zero(Currency currency) {
+<span class="fc" id="L52">        return of(BigDecimal.ZERO, currency);</span>
+    }
+
+    /* ========= Getters ========= */
+
+    public BigDecimal getAmount() {
+<span class="fc" id="L58">        return amount;</span>
+    }
+
+    public Currency getCurrency() {
+<span class="fc" id="L62">        return currency;</span>
+    }
+
+    /* ========= Arithmetic Operations ========= */
+
+    public Money add(Money other) {
+<span class="fc" id="L68">        requireSameCurrency(other);</span>
+<span class="fc" id="L69">        return new Money(this.amount.add(other.amount), this.currency);</span>
+    }
+
+    public Money subtract(Money other) {
+<span class="fc" id="L73">        requireSameCurrency(other);</span>
+<span class="fc" id="L74">        return new Money(this.amount.subtract(other.amount), this.currency);</span>
+    }
+
+    public Money multiply(BigDecimal multiplier) {
+<span class="fc" id="L78">        Objects.requireNonNull(multiplier, &quot;Multiplier must not be null&quot;);</span>
+        // normalize is applied in the constructor
+<span class="fc" id="L80">        return new Money(this.amount.multiply(multiplier), this.currency);</span>
+    }
+
+    public Money negate() {
+<span class="nc" id="L84">        return new Money(this.amount.negate(), this.currency);</span>
+    }
+
+    /* ========= Comparisons ========= */
+
+    public boolean isZero() {
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        return amount.compareTo(BigDecimal.ZERO) == 0;</span>
+    }
+
+    public boolean isPositive() {
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        return amount.compareTo(BigDecimal.ZERO) &gt; 0;</span>
+    }
+
+    public boolean isNegative() {
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        return amount.compareTo(BigDecimal.ZERO) &lt; 0;</span>
+    }
+
+    @Override
+    public int compareTo(Money other) {
+<span class="fc" id="L103">        requireSameCurrency(other);</span>
+<span class="fc" id="L104">        return this.amount.compareTo(other.amount);</span>
+    }
+
+    /* ========= Helpers ========= */
+
+    private static BigDecimal normalize(BigDecimal value) {
+<span class="fc" id="L110">        return value.setScale(SCALE, ROUNDING_MODE);</span>
+    }
+
+    private void requireSameCurrency(Money other) {
+<span class="fc" id="L114">        Objects.requireNonNull(other, &quot;Money must not be null&quot;);</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        if (!this.currency.equals(other.currency)) {</span>
+<span class="fc" id="L116">            throw new IllegalArgumentException(</span>
+                    &quot;Currency mismatch: &quot; + this.currency + &quot; vs &quot; + other.currency
+            );
+        }
+<span class="fc" id="L120">    }</span>
+
+    /* ========= Object Overrides ========= */
+
+    @Override
+    public boolean equals(Object o) {
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        if (this == o) return true;</span>
+        // Use Java 16 pattern matching if available; otherwise keep classic instanceof + cast
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">        if (!(o instanceof Money money)) return false;</span>
+<span class="pc bpc" id="L129" title="2 of 4 branches missed.">        return amount.equals(money.amount) &amp;&amp; currency.equals(money.currency);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L134">        return Objects.hash(amount, currency);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L139">        return currency.getCurrencyCode() + &quot; &quot; + amount.toPlainString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

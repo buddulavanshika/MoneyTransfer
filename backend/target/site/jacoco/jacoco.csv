@@ -1,0 +1,17 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+backend,com.mts.domain.enums,AccountStatus,0,21,0,0,0,4,0,1,0,1
+backend,com.mts.domain.enums,TransactionStatus,0,21,0,0,0,4,0,1,0,1
+backend,com.mts.domain.model,Account,34,213,9,17,2,54,9,23,2,17
+backend,com.mts.domain.model,TransactionLog,0,86,0,0,0,36,0,18,0,18
+backend,com.mts.domain.util,Money,21,188,6,10,2,32,8,20,2,18
+backend,com.mts.domain.service,MoneyTransferDomainService,7,159,5,17,2,43,5,13,0,7
+backend,com.mts,MoneyTransferApplication,3,0,0,0,1,0,1,0,1,0
+backend,com.mts.domain.exceptions,InsufficientBalanceException,0,4,0,0,0,2,0,1,0,1
+backend,com.mts.domain.exceptions,DuplicateTransferException,0,4,0,0,0,2,0,1,0,1
+backend,com.mts.domain.exceptions,AccountNotActiveException,0,4,0,0,0,2,0,1,0,1
+backend,com.mts.domain.exceptions,AccountNotFoundException,8,4,0,0,4,2,2,1,2,1
+backend,com.mts.domain.exceptions.base,DomainException,3,0,0,0,1,0,1,0,1,0
+backend,com.mts.domain.dto,TransferResponse,0,30,0,0,0,1,0,1,0,1
+backend,com.mts.domain.dto,ErrorResponse,0,29,0,0,0,11,0,6,0,6
+backend,com.mts.domain.dto,TransferRequest,85,25,6,2,27,10,16,5,12,5
+backend,com.mts.domain.dto,AccountResponse,0,145,0,12,0,40,0,22,0,16
