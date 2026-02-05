@@ -1,15 +1,15 @@
-package com.mts.application.service.impl;
+package com.mts.application.service;
 
 import com.mts.application.entities.Account;
 import com.mts.application.repository.AccountRepository;
 import com.mts.application.service.AccountService;
-import com.mts.application.exception.AccountNotFoundException; //
+import com.mts.domain.exceptions.AccountNotFoundException; //
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 
-@Service //
+@Service
 public class AccountServiceImpl implements AccountService {
 
     @Autowired

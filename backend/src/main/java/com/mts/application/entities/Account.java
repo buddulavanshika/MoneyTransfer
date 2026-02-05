@@ -31,7 +31,6 @@ public class Account {
     private Instant lastUpdated;
 
     // --- Core Logic Methods ---
-
     public void debit(BigDecimal amount) {
         ensureActive(); //
         if (this.balance.compareTo(amount) < 0) {
