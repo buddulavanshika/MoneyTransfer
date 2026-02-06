@@ -1,5 +1,6 @@
 package com.mts.application.entities;
 import com.mts.domain.enums.AccountStatus;
+import com.mts.domain.exceptions.AccountNotActiveException;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -48,7 +49,10 @@ public class Account {
 
     private void ensureActive() {
         if (this.status != AccountStatus.ACTIVE) {
-            throw new IllegalStateException("Account is not active"); //
+            throw new AccountNotActiveException("Account "+id+" is not active"); //
         }
+    }
+    public boolean isActive(){
+        return this.status==AccountStatus.ACTIVE;
     }
 }

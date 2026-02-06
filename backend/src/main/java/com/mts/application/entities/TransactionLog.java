@@ -14,6 +14,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name="transaction_logs")
 
 public class TransactionLog {
     @Id
@@ -30,8 +31,12 @@ public class TransactionLog {
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
+
     private String failureReason;
 
+    @Column(unique=true, nullable=false)
     private String idempotencyKey;
+
+    @Column(nullable=false)
     private Instant createdOn;
 }
