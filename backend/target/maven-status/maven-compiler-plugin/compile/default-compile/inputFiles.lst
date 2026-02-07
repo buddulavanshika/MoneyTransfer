@@ -1,3 +1,4 @@
+C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\config\OpenApiConfig.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\controller\AccountController.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\controller\TransferController.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\entities\Account.java
@@ -7,6 +8,10 @@ C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\repository\AccountRepository.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\repository\spec\TransactionLogSpecs.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\repository\TransactionLogRepository.java
+C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\security\AuthController.java
+C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\security\JwtConfig.java
+C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\security\payload\AuthDtos.java
+C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\security\SecurityConfig.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\service\AccountService.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\service\AccountServiceImpl.java
 C:\Users\labuser\Documents\Training project\MoneyTransfer\backend\src\main\java\com\mts\application\service\TransferService.java

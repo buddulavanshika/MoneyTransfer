@@ -4,7 +4,6 @@ import com.mts.domain.exceptions.AccountNotActiveException;
 import com.mts.domain.exceptions.AccountNotFoundException;
 import com.mts.domain.exceptions.DuplicateTransferException;
 import com.mts.domain.exceptions.InsufficientBalanceException;
-import com.mts.domain.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,41 +12,237 @@ import org.springframework.web.bind.annotation.RestControllerAdvice; // Prefer t
 
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+
 @RestControllerAdvice
-<span class="nc" id="L17">public class GlobalExceptionHandler {</span>
+<span class="nc" id="L27">public class GlobalExceptionHandler {</span>
 
     @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity&lt;ErrorResponse&gt; handleAccountNotFound(AccountNotFoundException ex) {
-<span class="nc" id="L21">        return buildErrorResponse(&quot;ACCOUNT_NOT_FOUND&quot;, ex.getMessage(), HttpStatus.NOT_FOUND);</span>
+    public ResponseEntity&lt;ErrorResponse&gt; handleAccountNotFound(
+            AccountNotFoundException ex, HttpServletRequest request) {
+<span class="nc" id="L32">        return buildErrorResponse(</span>
+                &quot;ACCOUNT_NOT_FOUND&quot;,
+<span class="nc" id="L34">                ex.getMessage(),</span>
+                HttpStatus.NOT_FOUND,
+                request,
+                null
+        );
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
-    public ResponseEntity&lt;ErrorResponse&gt; handleInsufficientBalance(InsufficientBalanceException ex) {
-<span class="nc" id="L26">        return buildErrorResponse(&quot;INSUFFICIENT_BALANCE&quot;, ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
+    public ResponseEntity&lt;ErrorResponse&gt; handleInsufficientBalance(
+            InsufficientBalanceException ex, HttpServletRequest request) {
+<span class="nc" id="L44">        return buildErrorResponse(</span>
+                &quot;INSUFFICIENT_BALANCE&quot;,
+<span class="nc" id="L46">                ex.getMessage(),</span>
+                HttpStatus.BAD_REQUEST,
+                request,
+                null
+        );
     }
 
     @ExceptionHandler(AccountNotActiveException.class)
-    public ResponseEntity&lt;ErrorResponse&gt; handleAccountNotActive(AccountNotActiveException ex) {
-<span class="nc" id="L31">        return buildErrorResponse(&quot;ACCOUNT_NOT_ACTIVE&quot;, ex.getMessage(), HttpStatus.FORBIDDEN);</span>
+    public ResponseEntity&lt;ErrorResponse&gt; handleAccountNotActive(
+            AccountNotActiveException ex, HttpServletRequest request) {
+<span class="nc" id="L56">        return buildErrorResponse(</span>
+                &quot;ACCOUNT_NOT_ACTIVE&quot;,
+<span class="nc" id="L58">                ex.getMessage(),</span>
+                HttpStatus.FORBIDDEN,
+                request,
+                null
+        );
     }
 
     @ExceptionHandler(DuplicateTransferException.class)
-    public ResponseEntity&lt;ErrorResponse&gt; handleDuplicateTransfer(DuplicateTransferException ex) {
-<span class="nc" id="L36">        return buildErrorResponse(&quot;DUPLICATE_TRANSFER&quot;, ex.getMessage(), HttpStatus.CONFLICT);</span>
+    public ResponseEntity&lt;ErrorResponse&gt; handleDuplicateTransfer(
+            DuplicateTransferException ex, HttpServletRequest request) {
+<span class="nc" id="L68">        return buildErrorResponse(</span>
+                &quot;DUPLICATE_TRANSFER&quot;,
+<span class="nc" id="L70">                ex.getMessage(),</span>
+                HttpStatus.CONFLICT,
+                request,
+                null
+        );
     }
 
-    private ResponseEntity&lt;ErrorResponse&gt; buildErrorResponse(String code, String message, HttpStatus status) {
-<span class="nc" id="L40">        ErrorResponse error = new ErrorResponse(code, message);</span>
-<span class="nc" id="L41">        return ResponseEntity.status(status).body(error);</span>
-    }
+    // ===== Persistence / Idempotency conflicts =====
+
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity&lt;?&gt; handleDuplicateKey(DataIntegrityViolationException ex) {
-<span class="nc" id="L45">        return ResponseEntity</span>
-<span class="nc" id="L46">                .status(HttpStatus.CONFLICT)</span>
-<span class="nc" id="L47">                .body(Map.of(</span>
-                        &quot;error&quot;, &quot;Duplicate request&quot;,
-                        &quot;message&quot;, &quot;Request already processed with same idempotency key&quot;
-                ));
+    public ResponseEntity&lt;ErrorResponse&gt; handleDuplicateKey(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
+        // You can inspect ex.getCause()/constraint name to be more specific if needed.
+<span class="nc" id="L83">        Map&lt;String, Object&gt; details = Map.of(</span>
+                &quot;reason&quot;, &quot;Unique constraint violated (likely idempotency key)&quot;,
+                &quot;hint&quot;, &quot;Reuse the same idempotency key only for the same request payload&quot;
+        );
+<span class="nc" id="L87">        return buildErrorResponse(</span>
+                &quot;DUPLICATE_REQUEST&quot;,
+                &quot;Request already processed with the same idempotency key&quot;,
+                HttpStatus.CONFLICT,
+                request,
+                details
+        );
+    }
+
+    // ===== Validation &amp; binding =====
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
+<span class="nc" id="L102">        Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {</span>
+<span class="nc" id="L104">            fieldErrors.put(fe.getField(), fe.getDefaultMessage());</span>
+<span class="nc" id="L105">        }</span>
+
+<span class="nc" id="L107">        Map&lt;String, Object&gt; details = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L108">        details.put(&quot;fieldErrors&quot;, fieldErrors);</span>
+
+<span class="nc" id="L110">        return buildErrorResponse(</span>
+                &quot;VALIDATION_FAILED&quot;,
+                &quot;One or more fields are invalid&quot;,
+                HttpStatus.BAD_REQUEST,
+                request,
+                details
+        );
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+
+<span class="nc" id="L123">        Map&lt;String, String&gt; violations = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        for (ConstraintViolation&lt;?&gt; v : ex.getConstraintViolations()) {</span>
+            // propertyPath like &quot;transfer.request.amount&quot;
+<span class="nc" id="L126">            violations.put(v.getPropertyPath().toString(), v.getMessage());</span>
+<span class="nc" id="L127">        }</span>
+
+<span class="nc" id="L129">        Map&lt;String, Object&gt; details = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L130">        details.put(&quot;violations&quot;, violations);</span>
+
+<span class="nc" id="L132">        return buildErrorResponse(</span>
+                &quot;CONSTRAINT_VIOLATION&quot;,
+                &quot;Validation constraints violated&quot;,
+                HttpStatus.BAD_REQUEST,
+                request,
+                details
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+<span class="nc" id="L145">        Map&lt;String, Object&gt; details = Map.of(</span>
+<span class="nc" id="L146">                &quot;name&quot;, ex.getName(),</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                &quot;requiredType&quot;, ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : null,</span>
+<span class="nc" id="L148">                &quot;value&quot;, ex.getValue()</span>
+        );
+
+<span class="nc" id="L151">        return buildErrorResponse(</span>
+                &quot;TYPE_MISMATCH&quot;,
+                &quot;Request parameter type is invalid&quot;,
+                HttpStatus.BAD_REQUEST,
+                request,
+                details
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        // Often thrown for malformed JSON, wrong enum values, etc.
+<span class="nc" id="L165">        return buildErrorResponse(</span>
+                &quot;MALFORMED_REQUEST&quot;,
+                &quot;Request body is invalid or unreadable&quot;,
+                HttpStatus.BAD_REQUEST,
+                request,
+                null
+        );
+    }
+
+    // ===== Catch-all fallback =====
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleGeneric(
+            Exception ex, HttpServletRequest request) {
+
+        // Avoid leaking internal details; log full stack trace in a logger/aspect.
+<span class="nc" id="L181">        return buildErrorResponse(</span>
+                &quot;INTERNAL_ERROR&quot;,
+                &quot;An unexpected error occurred&quot;,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                request,
+                null
+        );
+    }
+
+    // ===== Helper &amp; model =====
+
+    private ResponseEntity&lt;ErrorResponse&gt; buildErrorResponse(
+            String code,
+            String message,
+            HttpStatus status,
+            HttpServletRequest request,
+            Map&lt;String, Object&gt; details
+    ) {
+<span class="nc" id="L199">        ErrorResponse error = new ErrorResponse(</span>
+                code,
+                message,
+<span class="nc" id="L202">                status.value(),</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">                request != null ? request.getRequestURI() : null,</span>
+<span class="nc" id="L204">                OffsetDateTime.now().toString(),</span>
+<span class="nc" id="L205">                correlationId(request),</span>
+                details
+        );
+<span class="nc" id="L208">        return ResponseEntity.status(status).body(error);</span>
+    }
+
+    private String correlationId(HttpServletRequest request) {
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (request == null) return null;</span>
+        // If you add a filter that sets/propagates a correlation id header (e.g., X-Correlation-Id),
+        // read it here to include in all error responses:
+<span class="nc" id="L215">        String cid = request.getHeader(&quot;X-Correlation-Id&quot;);</span>
+<span class="nc bnc" id="L216" title="All 4 branches missed.">        return (cid == null || cid.isBlank()) ? null : cid;</span>
+    }
+
+    public static final class ErrorResponse {
+        private final String code;
+        private final String message;
+        private final int status;
+        private final String path;
+        private final String timestamp;
+        private final String correlationId;
+        private final Map&lt;String, Object&gt; details;
+
+        public ErrorResponse(String code, String message, int status, String path,
+<span class="nc" id="L229">                             String timestamp, String correlationId, Map&lt;String, Object&gt; details) {</span>
+<span class="nc" id="L230">            this.code = code;</span>
+<span class="nc" id="L231">            this.message = message;</span>
+<span class="nc" id="L232">            this.status = status;</span>
+<span class="nc" id="L233">            this.path = path;</span>
+<span class="nc" id="L234">            this.timestamp = timestamp;</span>
+<span class="nc" id="L235">            this.correlationId = correlationId;</span>
+<span class="nc" id="L236">            this.details = details;</span>
+<span class="nc" id="L237">        }</span>
+
+<span class="nc" id="L239">        public String getCode() { return code; }</span>
+<span class="nc" id="L240">        public String getMessage() { return message; }</span>
+<span class="nc" id="L241">        public int getStatus() { return status; }</span>
+<span class="nc" id="L242">        public String getPath() { return path; }</span>
+<span class="nc" id="L243">        public String getTimestamp() { return timestamp; }</span>
+<span class="nc" id="L244">        public String getCorrelationId() { return correlationId; }</span>
+<span class="nc" id="L245">        public Map&lt;String, Object&gt; getDetails() { return details; }</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
