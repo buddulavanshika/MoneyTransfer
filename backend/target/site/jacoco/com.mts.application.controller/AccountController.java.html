@@ -2,26 +2,45 @@
 
 import com.mts.application.entities.Account;
 import com.mts.application.service.AccountService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.mts.domain.dto.AccountResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping(&quot;/api/v1/accounts&quot;) //
-<span class="nc" id="L12">public class AccountController {</span>
+@RequestMapping(&quot;/api/v1/accounts&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Accounts&quot;, description = &quot;Account related APIs&quot;)
+public class AccountController {
 
-    @Autowired
-    private AccountService accountService; //
+    private final AccountService accountService;
 
-    @GetMapping(&quot;/{id}&quot;) // Task 8.4: Get account details
-    public ResponseEntity&lt;Account&gt; getAccount(@PathVariable String id) {
-<span class="nc" id="L19">        return ResponseEntity.ok(accountService.getAccountById(id));</span>
+    @Operation(summary = &quot;Get account details by account ID&quot;)
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;AccountResponse&gt; getAccount(@PathVariable String id) {
+<span class="nc" id="L25">        Account account = accountService.getAccountById(id); // expects String</span>
+<span class="nc" id="L26">        AccountResponse dto = toResponse(account);</span>
+<span class="nc" id="L27">        return ResponseEntity.ok(dto);</span>
     }
 
-    @GetMapping(&quot;/{id}/balance&quot;) // Task 8.4: Get account balance
+    @Operation(summary = &quot;Get account balance&quot;)
+    @GetMapping(&quot;/{id}/balance&quot;)
     public ResponseEntity&lt;BigDecimal&gt; getBalance(@PathVariable String id) {
-<span class="nc" id="L24">        return ResponseEntity.ok(accountService.getBalance(id));</span>
+<span class="nc" id="L33">        BigDecimal balance = accountService.getBalance(id); // expects String</span>
+<span class="nc" id="L34">        return ResponseEntity.ok(balance);</span>
+    }
+
+    private AccountResponse toResponse(Account a) {
+<span class="nc" id="L38">        AccountResponse dto = new AccountResponse();</span>
+<span class="nc" id="L39">        dto.setId(Long.valueOf(a.getId())); // both are String</span>
+<span class="nc" id="L40">        dto.setHolderName(a.getHolderName());</span>
+<span class="nc" id="L41">        dto.setBalance(a.getBalance());</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        dto.setStatus(a.getStatus() != null ? a.getStatus().name() : null);</span>
+<span class="nc" id="L43">        return dto;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

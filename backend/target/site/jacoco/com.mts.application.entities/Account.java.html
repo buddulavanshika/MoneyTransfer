@@ -9,7 +9,8 @@ import java.time.Instant;
 
 @Entity
 @Table(name = &quot;accounts&quot;)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Account {
@@ -33,27 +34,27 @@ public class Account {
 
     // --- Core Logic Methods ---
     public void debit(BigDecimal amount) {
-<span class="nc" id="L36">        ensureActive(); //</span>
-<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (this.balance.compareTo(amount) &lt; 0) {</span>
-<span class="nc" id="L38">            throw new IllegalStateException(&quot;Insufficient balance&quot;); //</span>
+<span class="nc" id="L37">        ensureActive(); //</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (this.balance.compareTo(amount) &lt; 0) {</span>
+<span class="nc" id="L39">            throw new IllegalStateException(&quot;Insufficient balance&quot;); //</span>
         }
-<span class="nc" id="L40">        this.balance = this.balance.subtract(amount).setScale(2, RoundingMode.HALF_UP);</span>
-<span class="nc" id="L41">        this.lastUpdated = Instant.now();</span>
-<span class="nc" id="L42">    }</span>
+<span class="nc" id="L41">        this.balance = this.balance.subtract(amount).setScale(2, RoundingMode.HALF_UP);</span>
+<span class="nc" id="L42">        this.lastUpdated = Instant.now();</span>
+<span class="nc" id="L43">    }</span>
 
     public void credit(BigDecimal amount) {
-<span class="nc" id="L45">        ensureActive(); //</span>
-<span class="nc" id="L46">        this.balance = this.balance.add(amount).setScale(2, RoundingMode.HALF_UP);</span>
-<span class="nc" id="L47">        this.lastUpdated = Instant.now();</span>
-<span class="nc" id="L48">    }</span>
+<span class="nc" id="L46">        ensureActive(); //</span>
+<span class="nc" id="L47">        this.balance = this.balance.add(amount).setScale(2, RoundingMode.HALF_UP);</span>
+<span class="nc" id="L48">        this.lastUpdated = Instant.now();</span>
+<span class="nc" id="L49">    }</span>
 
     private void ensureActive() {
-<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (this.status != AccountStatus.ACTIVE) {</span>
-<span class="nc" id="L52">            throw new AccountNotActiveException(&quot;Account &quot;+id+&quot; is not active&quot;); //</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (this.status != AccountStatus.ACTIVE) {</span>
+<span class="nc" id="L53">            throw new AccountNotActiveException(&quot;Account &quot;+id+&quot; is not active&quot;); //</span>
         }
-<span class="nc" id="L54">    }</span>
+<span class="nc" id="L55">    }</span>
     public boolean isActive(){
-<span class="nc bnc" id="L56" title="All 2 branches missed.">        return this.status==AccountStatus.ACTIVE;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        return this.status==AccountStatus.ACTIVE;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

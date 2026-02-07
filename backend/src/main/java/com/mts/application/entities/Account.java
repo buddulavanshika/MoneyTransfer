@@ -9,7 +9,8 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "accounts")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Account {

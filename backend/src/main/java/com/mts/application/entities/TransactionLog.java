@@ -8,35 +8,38 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name="transaction_logs")
-
+@Table(
+        name = "transaction_logs",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = "idempotency_key"
+        )
+)
 public class TransactionLog {
+
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false)
-    private String fromAccountId;
+    @Column(nullable = false, unique = true)
+    private String idempotencyKey;
 
-    @Column(nullable = false)
-    private String toAccountId;
+    private Long fromAccountId;
+    private Long toAccountId;
 
-    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
+    private String currency;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
     private String failureReason;
 
-    @Column(unique=true, nullable=false)
-    private String idempotencyKey;
-
-    @Column(nullable=false)
-    private Instant createdOn;
+    private OffsetDateTime createdOn = OffsetDateTime.now();
 }

@@ -5,37 +5,49 @@ import com.mts.domain.exceptions.AccountNotFoundException;
 import com.mts.domain.exceptions.DuplicateTransferException;
 import com.mts.domain.exceptions.InsufficientBalanceException;
 import com.mts.domain.dto.ErrorResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice; // Prefer this to get JSON by default
 
+import java.util.Map;
+
 @RestControllerAdvice
-<span class="nc" id="L14">public class GlobalExceptionHandler {</span>
+<span class="nc" id="L17">public class GlobalExceptionHandler {</span>
 
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity&lt;ErrorResponse&gt; handleAccountNotFound(AccountNotFoundException ex) {
-<span class="nc" id="L18">        return buildErrorResponse(&quot;ACCOUNT_NOT_FOUND&quot;, ex.getMessage(), HttpStatus.NOT_FOUND);</span>
+<span class="nc" id="L21">        return buildErrorResponse(&quot;ACCOUNT_NOT_FOUND&quot;, ex.getMessage(), HttpStatus.NOT_FOUND);</span>
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity&lt;ErrorResponse&gt; handleInsufficientBalance(InsufficientBalanceException ex) {
-<span class="nc" id="L23">        return buildErrorResponse(&quot;INSUFFICIENT_BALANCE&quot;, ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
+<span class="nc" id="L26">        return buildErrorResponse(&quot;INSUFFICIENT_BALANCE&quot;, ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
     }
 
     @ExceptionHandler(AccountNotActiveException.class)
     public ResponseEntity&lt;ErrorResponse&gt; handleAccountNotActive(AccountNotActiveException ex) {
-<span class="nc" id="L28">        return buildErrorResponse(&quot;ACCOUNT_NOT_ACTIVE&quot;, ex.getMessage(), HttpStatus.FORBIDDEN);</span>
+<span class="nc" id="L31">        return buildErrorResponse(&quot;ACCOUNT_NOT_ACTIVE&quot;, ex.getMessage(), HttpStatus.FORBIDDEN);</span>
     }
 
     @ExceptionHandler(DuplicateTransferException.class)
     public ResponseEntity&lt;ErrorResponse&gt; handleDuplicateTransfer(DuplicateTransferException ex) {
-<span class="nc" id="L33">        return buildErrorResponse(&quot;DUPLICATE_TRANSFER&quot;, ex.getMessage(), HttpStatus.CONFLICT);</span>
+<span class="nc" id="L36">        return buildErrorResponse(&quot;DUPLICATE_TRANSFER&quot;, ex.getMessage(), HttpStatus.CONFLICT);</span>
     }
 
     private ResponseEntity&lt;ErrorResponse&gt; buildErrorResponse(String code, String message, HttpStatus status) {
-<span class="nc" id="L37">        ErrorResponse error = new ErrorResponse(code, message);</span>
-<span class="nc" id="L38">        return ResponseEntity.status(status).body(error);</span>
+<span class="nc" id="L40">        ErrorResponse error = new ErrorResponse(code, message);</span>
+<span class="nc" id="L41">        return ResponseEntity.status(status).body(error);</span>
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity&lt;?&gt; handleDuplicateKey(DataIntegrityViolationException ex) {
+<span class="nc" id="L45">        return ResponseEntity</span>
+<span class="nc" id="L46">                .status(HttpStatus.CONFLICT)</span>
+<span class="nc" id="L47">                .body(Map.of(</span>
+                        &quot;error&quot;, &quot;Duplicate request&quot;,
+                        &quot;message&quot;, &quot;Request already processed with same idempotency key&quot;
+                ));
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

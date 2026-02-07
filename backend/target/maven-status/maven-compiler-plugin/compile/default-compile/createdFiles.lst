@@ -5,7 +5,9 @@ com\mts\domain\enums\AccountStatus.class
 com\mts\application\entities\Account.class
 com\mts\application\repository\AccountRepository.class
 com\mts\MoneyTransferApplication.class
+com\mts\application\service\TransferService$Direction.class
 com\mts\domain\model\TransactionLog.class
+com\mts\application\mapper\TransactionMapper.class
 com\mts\domain\exceptions\InsufficientBalanceException.class
 com\mts\domain\dto\TransferRequest.class
 com\mts\domain\exceptions\base\DomainException.class
@@ -19,6 +21,7 @@ com\mts\domain\util\Money.class
 com\mts\domain\service\MoneyTransferDomainService.class
 com\mts\domain\model\Account.class
 com\mts\domain\exceptions\AccountNotActiveException.class
+com\mts\application\repository\spec\TransactionLogSpecs.class
 com\mts\application\service\TransferServiceImpl.class
 com\mts\application\entities\TransactionLog.class
 com\mts\application\service\TransferService.class
