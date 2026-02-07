@@ -5,13 +5,7 @@ import com.mts.domain.enums.TransactionStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/**
- * Output DTO for transfer API.
- *
- * Immutable and concise using Java 17 record.
- * Suitable for returning from controllers in Module 3.
- */
-<span class="fc" id="L14">public record TransferResponse(</span>
+<span class="fc" id="L8">public record TransferResponse(</span>
         String transactionId,
         String sourceAccountId,
         String destinationAccountId,
@@ -21,5 +15,20 @@ import java.time.Instant;
         String message,
         String idempotencyKey,
         Instant createdOn
-) { }
+) {
+    // Custom constructor for simple messages
+    public TransferResponse(String transactionId, String message) {
+<span class="nc" id="L21">        this(</span>
+                transactionId,
+                null,                 // sourceAccountId
+                null,                 // destinationAccountId
+                null,                 // amount
+                null,                 // currency
+                TransactionStatus.SUCCESS,
+                message,
+                null,                 // idempotencyKey
+<span class="nc" id="L30">                Instant.now()         // createdOn</span>
+        );
+<span class="nc" id="L32">    }</span>
+}
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

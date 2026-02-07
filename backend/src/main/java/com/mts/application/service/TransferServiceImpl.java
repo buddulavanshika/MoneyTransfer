@@ -12,85 +12,60 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
-@Service
+
+@Service //
 public class TransferServiceImpl implements TransferService {
 
     @Autowired
-    private AccountService accountService;
+    private AccountService accountService; //
 
     @Autowired
-    private TransactionLogRepository logRepository;
+    private TransactionLogRepository logRepository; //
 
     @Override
-    @Transactional
+    @Transactional // Ensures atomicity: if any step fails, everything rolls back
     public TransferResponse transfer(TransferRequest request) {
 
-        // 0. Self-transfer guard
-        if (request.getSourceAccountId().equals(request.getDestinationAccountId())) {
-            throw new IllegalArgumentException("Source and destination accounts must be different");
-        }
-
-        // 1. Idempotency fast check (NOT final authority)
+        // 1. Idempotency Check: Prevent duplicate processing
         if (logRepository.findByIdempotencyKey(request.getIdempotencyKey()).isPresent()) {
-            throw new DuplicateTransferException(
-                    "Duplicate transaction: " + request.getIdempotencyKey()
-            );
+            throw new DuplicateTransferException("Duplicate transaction: " + request.getIdempotencyKey());
         }
-
-        TransactionLog log = null;
 
         try {
-            // 2. Lock & validate accounts
-            Account sender = accountService.getAccountForUpdate(request.getSourceAccountId());
-            Account receiver = accountService.getAccountForUpdate(request.getDestinationAccountId());
+            // 2. Validation: Check if accounts exist and are ACTIVE
+            accountService.validateAccountForTransfer(request.getSourceAccountId());
+            accountService.validateAccountForTransfer(request.getDestinationAccountId());
 
-            // 3. Execute transfer
+            // 3. Retrieval: Fetch account objects
+            Account sender = accountService.getAccountById(request.getSourceAccountId());
+            Account receiver = accountService.getAccountById(request.getDestinationAccountId());
+
+            // 4. Execution: Debit and Credit (Insufficient balance check is inside debit)
             sender.debit(request.getAmount());
             receiver.credit(request.getAmount());
 
-            // 4. Log success
-            log = buildLog(request, TransactionStatus.SUCCESS, null);
-            logRepository.save(log);
+            // 5. Auditing: Log the success
+            TransactionLog successLog = saveLog(request, TransactionStatus.SUCCESS, null);
 
-            return new TransferResponse(
-                    log.getId(),
-                    "Transfer completed successfully"
-            );
+            // 6. Return: Using your custom 2-argument constructor
+            return new TransferResponse(successLog.getId().toString(), "Transfer Completed Successfully");
 
-        } catch (Exception ex) {
-
-            // 5. Persist failure log in NEW transaction
-            persistFailureLog(request, ex.getMessage());
-
-            throw ex;
+        } catch (Exception e) {
+            // Log failure for auditing even if the account balance rolls back
+            saveLog(request, TransactionStatus.FAILED, e.getMessage());
+            throw e; // Rethrow to trigger @Transactional rollback
         }
     }
 
-    private TransactionLog buildLog(
-            TransferRequest req,
-            TransactionStatus status,
-            String reason) {
-
+    private TransactionLog saveLog(TransferRequest req, TransactionStatus status, String reason) {
         TransactionLog log = new TransactionLog();
-        log.setId(java.util.UUID.randomUUID().toString());
         log.setFromAccountId(req.getSourceAccountId());
         log.setToAccountId(req.getDestinationAccountId());
         log.setAmount(req.getAmount());
         log.setStatus(status);
         log.setFailureReason(reason);
         log.setIdempotencyKey(req.getIdempotencyKey());
-        return log;
+        log.setCreatedOn(Instant.now());
+        return logRepository.save(log); //
     }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void persistFailureLog(TransferRequest req, String reason) {
-        TransactionLog log = buildLog(req, TransactionStatus.FAILED, reason);
-        logRepository.save(log);
-    }
-    @Transactional
-    public Account getAccountForUpdate(String id) {
-        return accountRepository.findWithLockById(id)
-            .orElseThrow(() -> new AccountNotFoundException(id));
-}
-
 }
