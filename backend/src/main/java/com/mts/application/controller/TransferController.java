@@ -1,9 +1,9 @@
 package com.mts.application.controller;
 
-import com.mts.application.entities.TransactionLog;
 import com.mts.application.service.TransferService;
 import com.mts.domain.dto.TransferRequest;
 import com.mts.domain.dto.TransferResponse;
+import com.mts.domain.dto.TransactionLogResponse;
 import com.mts.domain.enums.TransactionStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,6 +22,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @RestController
@@ -31,7 +32,6 @@ import java.time.OffsetDateTime;
 public class TransferController {
 
     private final TransferService transferService;
-    private final TransferService txQueryService; // ⬅️ service used for history queries
 
     // -------------------------
     // POST /api/v1/transfers
@@ -59,8 +59,6 @@ public class TransferController {
             @Parameter(description = "Optional idempotency key header to prevent duplicate transfers")
             String idempotencyKey
     ) {
-        // If your TransferService accepts the header, pass it along; else request already carries the key.
-        // e.g., transferService.transfer(request, idempotencyKey);
         TransferResponse response = transferService.transfer(request);
         return ResponseEntity.ok(response);
     }
@@ -74,13 +72,13 @@ public class TransferController {
                     + "Supports date range, status, and direction filters.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Page of transactions",
-                            content = @Content(schema = @Schema(implementation = TransactionLog.class))),
+                            content = @Content(schema = @Schema(implementation = TransactionLogResponse.class))),
                     @ApiResponse(responseCode = "400", description = "Invalid filters or pagination parameters", content = @Content),
                     @ApiResponse(responseCode = "404", description = "Account not found (if you enforce existence check)", content = @Content)
             }
     )
     @GetMapping("/accounts/{id}/transactions")
-    public ResponseEntity<Page<TransactionLog>> getTransactionHistory(
+    public ResponseEntity<Page<TransactionLogResponse>> getTransactionHistory(
             @Parameter(name = "id", description = "Account ID (string)", in = ParameterIn.PATH, required = true)
             @PathVariable("id") String accountId,
 
@@ -107,8 +105,10 @@ public class TransferController {
             @ParameterObject
             @PageableDefault(size = 20, sort = "createdOn,desc") Pageable pageable
     ) {
-        Page<TransactionLog> page = txQueryService.getAccountTransactions(
-                accountId, from, to, status, direction, pageable
+        Instant fromInstant = from != null ? from.toInstant() : null;
+        Instant toInstant = to != null ? to.toInstant() : null;
+        Page<TransactionLogResponse> page = transferService.getAccountTransactions(
+                accountId, fromInstant, toInstant, status, direction, pageable
         );
         return ResponseEntity.ok(page);
     }

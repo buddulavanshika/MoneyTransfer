@@ -60,34 +60,34 @@ public class TransferRequest {
                            String destinationAccountId,
                            BigDecimal amount,
                            String currency,
-<span class="nc" id="L63">                           String idempotencyKey) {</span>
-<span class="nc" id="L64">        this.sourceAccountId = sourceAccountId;</span>
-<span class="nc" id="L65">        this.destinationAccountId = destinationAccountId;</span>
-<span class="nc" id="L66">        this.amount = amount;</span>
-<span class="nc" id="L67">        this.currency = currency;</span>
-<span class="nc" id="L68">        this.idempotencyKey = idempotencyKey;</span>
-<span class="nc" id="L69">    }</span>
+<span class="fc" id="L63">                           String idempotencyKey) {</span>
+<span class="fc" id="L64">        this.sourceAccountId = sourceAccountId;</span>
+<span class="fc" id="L65">        this.destinationAccountId = destinationAccountId;</span>
+<span class="fc" id="L66">        this.amount = amount;</span>
+<span class="fc" id="L67">        this.currency = currency;</span>
+<span class="fc" id="L68">        this.idempotencyKey = idempotencyKey;</span>
+<span class="fc" id="L69">    }</span>
 
     // ---- Getters &amp; Setters (retain original) ----
 
     public String getSourceAccountId() {
-<span class="nc" id="L74">        return sourceAccountId;</span>
+<span class="fc" id="L74">        return sourceAccountId;</span>
     }
 
     public void setSourceAccountId(String sourceAccountId) {
-<span class="nc" id="L78">        this.sourceAccountId = sourceAccountId;</span>
-<span class="nc" id="L79">    }</span>
+<span class="fc" id="L78">        this.sourceAccountId = sourceAccountId;</span>
+<span class="fc" id="L79">    }</span>
 
     public String getDestinationAccountId() {
-<span class="nc" id="L82">        return destinationAccountId;</span>
+<span class="fc" id="L82">        return destinationAccountId;</span>
     }
 
     public void setDestinationAccountId(String destinationAccountId) {
-<span class="nc" id="L86">        this.destinationAccountId = destinationAccountId;</span>
-<span class="nc" id="L87">    }</span>
+<span class="fc" id="L86">        this.destinationAccountId = destinationAccountId;</span>
+<span class="fc" id="L87">    }</span>
 
     public BigDecimal getAmount() {
-<span class="nc" id="L90">        return amount;</span>
+<span class="fc" id="L90">        return amount;</span>
     }
 
     public void setAmount(BigDecimal amount) {
@@ -95,15 +95,15 @@ public class TransferRequest {
 <span class="fc" id="L95">    }</span>
 
     public String getCurrency() {
-<span class="nc" id="L98">        return currency;</span>
+<span class="fc" id="L98">        return currency;</span>
     }
 
     public void setCurrency(String currency) {
-<span class="nc" id="L102">        this.currency = currency;</span>
-<span class="nc" id="L103">    }</span>
+<span class="fc" id="L102">        this.currency = currency;</span>
+<span class="fc" id="L103">    }</span>
 
     public String getIdempotencyKey() {
-<span class="nc" id="L106">        return idempotencyKey;</span>
+<span class="fc" id="L106">        return idempotencyKey;</span>
     }
 
     public void setIdempotencyKey(String idempotencyKey) {
@@ -117,9 +117,9 @@ public class TransferRequest {
      * Alias for sourceAccountId as a Long. Returns null if not set or not numeric.
      */
     public Long getFromAccountId() {
-<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (sourceAccountId == null) return null;</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (sourceAccountId == null) return null;</span>
         try {
-<span class="nc" id="L122">            return Long.valueOf(sourceAccountId);</span>
+<span class="fc" id="L122">            return Long.valueOf(sourceAccountId);</span>
 <span class="nc" id="L123">        } catch (NumberFormatException ex) {</span>
 <span class="nc" id="L124">            return null;</span>
         }
@@ -136,9 +136,9 @@ public class TransferRequest {
      * Alias for destinationAccountId as a Long. Returns null if not set or not numeric.
      */
     public Long getToAccountId() {
-<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (destinationAccountId == null) return null;</span>
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        if (destinationAccountId == null) return null;</span>
         try {
-<span class="nc" id="L141">            return Long.valueOf(destinationAccountId);</span>
+<span class="fc" id="L141">            return Long.valueOf(destinationAccountId);</span>
 <span class="nc" id="L142">        } catch (NumberFormatException ex) {</span>
 <span class="nc" id="L143">            return null;</span>
         }

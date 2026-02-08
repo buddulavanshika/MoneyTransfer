@@ -2,7 +2,6 @@ package com.mts.application.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -59,10 +58,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // === Public endpoints ===
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        // === Public: authentication only ===
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                        // Swagger & OpenAPI endpoints (permit all)
+                        // Swagger & OpenAPI (permit all)
                         .requestMatchers(
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
@@ -71,11 +70,9 @@ public class SecurityConfig {
                                 "/doc.html"
                         ).permitAll()
 
-                        // === Secured APIs by scope ===
-                        .requestMatchers(HttpMethod.POST, "/api/transfers").hasAuthority("SCOPE_transfers.write")
-                        .requestMatchers(HttpMethod.GET, "/api/transactions/**").hasAuthority("SCOPE_transfers.read")
+                        // === All other /api/** require authenticated USER ===
+                        .requestMatchers("/api/**").hasRole("USER")
 
-                        // Any other request requires authentication
                         .anyRequest().authenticated()
                 )
                 // Resource Server with JWT (Nimbus under the hood)

@@ -36,7 +36,7 @@ public class AccountController {
 
     private AccountResponse toResponse(Account a) {
 <span class="nc" id="L38">        AccountResponse dto = new AccountResponse();</span>
-<span class="nc" id="L39">        dto.setId(Long.valueOf(a.getId())); // both are String</span>
+<span class="nc" id="L39">        dto.setId(a.getId());</span>
 <span class="nc" id="L40">        dto.setHolderName(a.getHolderName());</span>
 <span class="nc" id="L41">        dto.setBalance(a.getBalance());</span>
 <span class="nc bnc" id="L42" title="All 2 branches missed.">        dto.setStatus(a.getStatus() != null ? a.getStatus().name() : null);</span>

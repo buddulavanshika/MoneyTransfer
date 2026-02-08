@@ -11,7 +11,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+    defer-datasource-initialization: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -19,9 +20,19 @@ spring:
         jdbc:
           time_zone: UTC
 
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:seed-data.sql
+
   jackson:
     time-zone: UTC
-    # (REMOVED) serialization.WRITE_DATES_AS_TIMESTAMPS: false  <-- don't include this
+
+logging:
+  level:
+    root: INFO
+    com.mts: DEBUG
+    org.hibernate.SQL: DEBUG
 
 security:
   jwt:

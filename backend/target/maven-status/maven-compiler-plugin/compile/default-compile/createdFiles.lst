@@ -1,6 +1,7 @@
 com\mts\application\exceptions\GlobalExceptionHandler.class
 com\mts\application\repository\TransactionLogRepository.class
 com\mts\domain\exceptions\AccountNotFoundException.class
+com\mts\application\entities\Account$AccountBuilder.class
 com\mts\domain\enums\AccountStatus.class
 com\mts\application\exceptions\GlobalExceptionHandler$ErrorResponse.class
 com\mts\application\security\payload\AuthDtos$LoginResponse.class
@@ -11,8 +12,10 @@ com\mts\application\service\TransferService$Direction.class
 com\mts\domain\model\TransactionLog.class
 com\mts\application\security\AuthController.class
 com\mts\application\mapper\TransactionMapper.class
+com\mts\domain\dto\TransactionLogResponse.class
 com\mts\application\security\JwtConfig.class
 com\mts\domain\exceptions\InsufficientBalanceException.class
+com\mts\application\config\ServiceLoggingAspect.class
 com\mts\domain\dto\TransferRequest.class
 com\mts\domain\exceptions\base\DomainException.class
 com\mts\application\security\SecurityConfig.class
@@ -29,6 +32,7 @@ com\mts\application\config\OpenApiConfig.class
 com\mts\domain\service\MoneyTransferDomainService.class
 com\mts\domain\model\Account.class
 com\mts\domain\exceptions\AccountNotActiveException.class
+com\mts\domain\exceptions\OptimisticLockException.class
 com\mts\application\repository\spec\TransactionLogSpecs.class
 com\mts\application\service\TransferServiceImpl.class
 com\mts\application\entities\TransactionLog.class

@@ -3,221 +3,202 @@
 import com.mts.application.entities.Account;
 import com.mts.application.entities.TransactionLog;
 import com.mts.application.mapper.TransactionMapper;
+import com.mts.application.repository.AccountRepository;
 import com.mts.application.repository.TransactionLogRepository;
 import com.mts.application.repository.spec.TransactionLogSpecs;
 import com.mts.domain.dto.TransferRequest;
 import com.mts.domain.dto.TransferResponse;
+import com.mts.domain.dto.TransactionLogResponse;
 import com.mts.domain.enums.TransactionStatus;
 import com.mts.domain.exceptions.DuplicateTransferException;
+import com.mts.domain.exceptions.InsufficientBalanceException;
+import com.mts.domain.exceptions.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.util.UUID;
 
 import static org.springframework.data.jpa.domain.Specification.where;
 
 @Service
 @RequiredArgsConstructor
+<span class="fc" id="L34">@Slf4j</span>
 public class TransferServiceImpl implements TransferService {
 
     private final AccountService accountService;
+    private final AccountRepository accountRepository;
     private final TransactionLogRepository logRepository;
 
-    /**
-     * Idempotent transfer with String account IDs.
-     * Flow:
-     * 1) Claim idempotency by inserting a PENDING log (unique constraint on idempotency_key).
-     * 2) Validate request &amp; accounts.
-     * 3) Execute transfer (debit/credit).
-     * 4) Mark SUCCESS (or FAILED on exception), then return response.
-     */
     @Override
     @Transactional
     public TransferResponse transfer(TransferRequest request) {
-        // Resolve String account IDs from the request
-<span class="nc" id="L44">        final String fromId = resolveFromId(request);</span>
-<span class="nc" id="L45">        final String toId   = resolveToId(request);</span>
+<span class="fc" id="L44">        String fromIdStr = resolveFromId(request);</span>
+<span class="fc" id="L45">        String toIdStr = resolveToId(request);</span>
+<span class="fc" id="L46">        Long fromId = parseAccountId(fromIdStr, &quot;source&quot;);</span>
+<span class="fc" id="L47">        Long toId = parseAccountId(toIdStr, &quot;destination&quot;);</span>
 
-        // 1) Claim idempotency (PENDING)
-<span class="nc" id="L48">        TransactionLog log = new TransactionLog();</span>
-<span class="nc" id="L49">        log.setIdempotencyKey(request.getIdempotencyKey());</span>
-<span class="nc" id="L50">        log.setFromAccountId(Long.valueOf(fromId));          // String</span>
-<span class="nc" id="L51">        log.setToAccountId(Long.valueOf(toId));              // String</span>
-<span class="nc" id="L52">        log.setAmount(request.getAmount());</span>
-<span class="nc" id="L53">        log.setCurrency(request.getCurrency());</span>
-<span class="nc" id="L54">        log.setStatus(TransactionStatus.PENDING);</span>
-<span class="nc" id="L55">        log.setFailureReason(null);</span>
-<span class="nc" id="L56">        log.setCreatedOn(OffsetDateTime.now()); // or OffsetDateTime.now(ZoneOffset.UTC)</span>
+        // 1) Idempotency: reject if key already used
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (logRepository.findByIdempotencyKey(request.getIdempotencyKey()).isPresent()) {</span>
+<span class="fc" id="L51">            throw new DuplicateTransferException(&quot;Duplicate transfer request (idempotency key already used)&quot;);</span>
+        }
 
-        try {
-            // Flush now so duplicate keys trigger DataIntegrityViolationException here
-<span class="nc" id="L60">            log = logRepository.saveAndFlush(log);</span>
-<span class="nc" id="L61">        } catch (DataIntegrityViolationException dup) {</span>
-            // Option A: reject duplicates (current behavior)
-<span class="nc" id="L63">            throw new DuplicateTransferException(&quot;Duplicate transaction: &quot; + request.getIdempotencyKey());</span>
-
-            // Option B: return previous SUCCESS result (uncomment if desired)
-            // var existing = logRepository.findByIdempotencyKey(request.getIdempotencyKey()).orElse(null);
-            // if (existing != null &amp;&amp; existing.getStatus() == TransactionStatus.SUCCESS) {
-            //     return new TransferResponse(existing.getId().toString(), &quot;Duplicate request: returning previous result&quot;);
-            // }
-            // throw new DuplicateTransferException(&quot;Duplicate transaction: &quot; + request.getIdempotencyKey());
-<span class="nc" id="L71">        }</span>
+        // 2) Create and persist PENDING log to claim idempotency (unique constraint enforces at DB level)
+<span class="fc" id="L55">        TransactionLog log = new TransactionLog();</span>
+<span class="fc" id="L56">        log.setId(UUID.randomUUID().toString());</span>
+<span class="fc" id="L57">        log.setIdempotencyKey(request.getIdempotencyKey());</span>
+<span class="fc" id="L58">        log.setFromAccountId(fromId);</span>
+<span class="fc" id="L59">        log.setToAccountId(toId);</span>
+<span class="fc" id="L60">        log.setAmount(request.getAmount());</span>
+<span class="fc" id="L61">        log.setCurrency(request.getCurrency());</span>
+<span class="fc" id="L62">        log.setStatus(TransactionStatus.PENDING);</span>
+<span class="fc" id="L63">        log.setFailureReason(null);</span>
+<span class="fc" id="L64">        log.setCreatedOn(Instant.now());</span>
 
         try {
-            // 2) Validate request &amp; accounts
-<span class="nc" id="L75">            validateTransfer(fromId, toId, request.getAmount(), request.getCurrency());</span>
+<span class="fc" id="L67">            log = logRepository.saveAndFlush(log);</span>
+<span class="nc" id="L68">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L69">            throw new DuplicateTransferException(&quot;Duplicate transfer request (idempotency key already used)&quot;, e);</span>
+<span class="fc" id="L70">        }</span>
 
-            // 3) Load accounts (String IDs)
-<span class="nc" id="L78">            Account sender = accountService.getAccountById(fromId);</span>
-<span class="nc" id="L79">            Account receiver = accountService.getAccountById(toId);</span>
+        try {
+            // 3) Validate and load accounts
+<span class="fc" id="L74">            validateTransfer(fromIdStr, toIdStr, request.getAmount());</span>
+<span class="fc" id="L75">            Account sender = accountService.getAccountById(fromIdStr);</span>
+<span class="fc" id="L76">            Account receiver = accountService.getAccountById(toIdStr);</span>
 
-            // 4) Execute the transfer (throws on insufficient funds, etc.)
-<span class="nc" id="L82">            executeTransfer(sender, receiver, request.getAmount());</span>
+            // 4) Debit and credit (may throw InsufficientBalanceException / AccountNotActiveException)
+            try {
+<span class="fc" id="L80">                sender.debit(request.getAmount());</span>
+<span class="fc" id="L81">                receiver.credit(request.getAmount());</span>
+<span class="fc" id="L82">            } catch (IllegalStateException e) {</span>
+<span class="pc bpc" id="L83" title="2 of 4 branches missed.">                if (e.getMessage() != null &amp;&amp; e.getMessage().contains(&quot;Insufficient balance&quot;)) {</span>
+<span class="fc" id="L84">                    throw new InsufficientBalanceException(e.getMessage());</span>
+                }
+<span class="nc" id="L86">                throw e;</span>
+<span class="fc" id="L87">            }</span>
 
-            // 5) Mark SUCCESS
-<span class="nc" id="L85">            log.setStatus(TransactionStatus.SUCCESS);</span>
-<span class="nc" id="L86">            log.setFailureReason(null);</span>
-<span class="nc" id="L87">            logRepository.save(log);</span>
+            // 5) Persist updated accounts (optimistic lock may throw here)
+<span class="fc" id="L90">            accountRepository.saveAndFlush(sender);</span>
+<span class="fc" id="L91">            accountRepository.saveAndFlush(receiver);</span>
 
-<span class="nc" id="L89">            return new TransferResponse(log.getId().toString(), &quot;Transfer Completed Successfully&quot;);</span>
+            // 6) Mark SUCCESS and persist log
+<span class="fc" id="L94">            log.setStatus(TransactionStatus.SUCCESS);</span>
+<span class="fc" id="L95">            log.setFailureReason(null);</span>
+<span class="fc" id="L96">            logRepository.save(log);</span>
 
-<span class="nc" id="L91">        } catch (Exception e) {</span>
-            // 6) Mark FAILED for audit, then rethrow to rollback money movement
-<span class="nc" id="L93">            log.setStatus(TransactionStatus.FAILED);</span>
-<span class="nc" id="L94">            log.setFailureReason(e.getMessage());</span>
-<span class="nc" id="L95">            logRepository.save(log);</span>
-<span class="nc" id="L96">            throw e;</span>
+<span class="fc" id="L98">            return buildSuccessResponse(log, fromIdStr, toIdStr, request);</span>
+
+<span class="fc" id="L100">        } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L101">            log.setStatus(TransactionStatus.FAILED);</span>
+<span class="fc" id="L102">            log.setFailureReason(&quot;Concurrent modification conflict&quot;);</span>
+<span class="fc" id="L103">            logRepository.save(log);</span>
+<span class="fc" id="L104">            throw new OptimisticLockException(&quot;Account was modified by another transaction; please retry&quot;, e);</span>
+<span class="fc" id="L105">        } catch (Exception e) {</span>
+<span class="fc" id="L106">            log.setStatus(TransactionStatus.FAILED);</span>
+<span class="fc" id="L107">            log.setFailureReason(e.getMessage());</span>
+<span class="fc" id="L108">            logRepository.save(log);</span>
+<span class="fc" id="L109">            throw e;</span>
         }
     }
 
-    /**
-     * Validates input and account state (existence + ACTIVE) for String IDs.
-     * Adds basic business rules: non-null/positive amount, non-blank currency, different accounts.
-     */
-    private void validateTransfer(String fromId, String toId, BigDecimal amount, String currency) {
-<span class="nc bnc" id="L105" title="All 4 branches missed.">        if (fromId == null || fromId.isBlank()) {</span>
-<span class="nc" id="L106">            throw new IllegalArgumentException(&quot;Missing source account id&quot;);</span>
+    private void validateTransfer(String fromId, String toId, BigDecimal amount) {
+<span class="pc bpc" id="L114" title="2 of 4 branches missed.">        if (fromId == null || fromId.isBlank()) {</span>
+<span class="nc" id="L115">            throw new IllegalArgumentException(&quot;Missing source account id&quot;);</span>
         }
-<span class="nc bnc" id="L108" title="All 4 branches missed.">        if (toId == null || toId.isBlank()) {</span>
-<span class="nc" id="L109">            throw new IllegalArgumentException(&quot;Missing destination account id&quot;);</span>
+<span class="pc bpc" id="L117" title="2 of 4 branches missed.">        if (toId == null || toId.isBlank()) {</span>
+<span class="nc" id="L118">            throw new IllegalArgumentException(&quot;Missing destination account id&quot;);</span>
         }
-<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (fromId.equals(toId)) {</span>
-<span class="nc" id="L112">            throw new IllegalArgumentException(&quot;Source and destination accounts must be different&quot;);</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (fromId.equals(toId)) {</span>
+<span class="nc" id="L121">            throw new IllegalArgumentException(&quot;Source and destination accounts must be different&quot;);</span>
         }
-<span class="nc bnc" id="L114" title="All 4 branches missed.">        if (amount == null || amount.signum() &lt;= 0) {</span>
-<span class="nc" id="L115">            throw new IllegalArgumentException(&quot;Amount must be positive&quot;);</span>
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">        if (amount == null || amount.signum() &lt;= 0) {</span>
+<span class="nc" id="L124">            throw new IllegalArgumentException(&quot;Amount must be positive&quot;);</span>
         }
-<span class="nc bnc" id="L117" title="All 4 branches missed.">        if (currency == null || currency.isBlank()) {</span>
-<span class="nc" id="L118">            throw new IllegalArgumentException(&quot;Currency is required&quot;);</span>
-        }
+<span class="fc" id="L126">        accountService.validateAccountForTransfer(fromId);</span>
+<span class="fc" id="L127">        accountService.validateAccountForTransfer(toId);</span>
+<span class="fc" id="L128">    }</span>
 
-        // Delegate domain validations (exists + ACTIVE, etc.)
-<span class="nc" id="L122">        accountService.validateAccountForTransfer(fromId);</span>
-<span class="nc" id="L123">        accountService.validateAccountForTransfer(toId);</span>
-<span class="nc" id="L124">    }</span>
+    private TransferResponse buildSuccessResponse(TransactionLog log, String sourceId, String destId, TransferRequest request) {
+<span class="fc" id="L131">        return new TransferResponse(</span>
+<span class="fc" id="L132">                log.getId(),</span>
+                sourceId,
+                destId,
+<span class="fc" id="L135">                log.getAmount(),</span>
+<span class="fc" id="L136">                request.getCurrency(),</span>
+                TransactionStatus.SUCCESS,
+                &quot;Transfer completed successfully&quot;,
+<span class="fc" id="L139">                log.getIdempotencyKey(),</span>
+<span class="fc" id="L140">                log.getCreatedOn()</span>
+        );
+    }
 
-    /**
-     * Performs the actual debit/credit.
-     * Assumes Account.debit(...) enforces insufficient funds rule,
-     * and Account.credit(...) increments the balance.
-     */
-    private void executeTransfer(Account sender, Account receiver, BigDecimal amount) {
-<span class="nc" id="L132">        sender.debit(amount);</span>
-<span class="nc" id="L133">        receiver.credit(amount);</span>
-<span class="nc" id="L134">    }</span>
+    private static Long parseAccountId(String idStr, String label) {
+<span class="pc bpc" id="L145" title="2 of 4 branches missed.">        if (idStr == null || idStr.isBlank()) {</span>
+<span class="nc" id="L146">            throw new IllegalArgumentException(&quot;Missing &quot; + label + &quot; account id&quot;);</span>
+        }
+        try {
+<span class="fc" id="L149">            return Long.valueOf(idStr.trim());</span>
+<span class="nc" id="L150">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L151">            throw new IllegalArgumentException(&quot;Invalid &quot; + label + &quot; account id: &quot; + idStr);</span>
+        }
+    }
 
-    // ===== Helpers (String-first) =====
-
-    /**
-     * Prefer a String 'fromAccountId' in the request.
-     * If your DTO has both 'fromAccountId' and 'sourceAccountId', use whichever is non-blank.
-     */
     private String resolveFromId(TransferRequest req) {
-<span class="nc" id="L143">        String id = null;</span>
-        try {
-            // If your DTO has getFromAccountId() as String, use it:
-<span class="nc" id="L146">            id = safeTrim(String.valueOf(req.getFromAccountId()));</span>
-<span class="nc" id="L147">        } catch (NoSuchMethodError | Exception ignore) {</span>
-            // ignore if DTO doesn’t have this accessor
-<span class="nc" id="L149">        }</span>
-<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (isBlank(id)) {</span>
-<span class="nc" id="L151">            id = safeTrim(req.getSourceAccountId()); // fallback</span>
+<span class="fc" id="L156">        String id = req.getSourceAccountId();</span>
+<span class="pc bpc" id="L157" title="2 of 4 branches missed.">        if (id == null || id.isBlank()) {</span>
+<span class="nc" id="L158">            Long from = req.getFromAccountId();</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">            id = from != null ? String.valueOf(from) : null;</span>
         }
-<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (isBlank(id)) {</span>
-<span class="nc" id="L154">            throw new IllegalArgumentException(&quot;Missing fromAccountId/sourceAccountId&quot;);</span>
-        }
-<span class="nc" id="L156">        return id;</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">        return id != null ? id.trim() : null;</span>
     }
 
-    /**
-     * Prefer a String 'toAccountId' in the request.
-     * If your DTO has both 'toAccountId' and 'destinationAccountId', use whichever is non-blank.
-     */
     private String resolveToId(TransferRequest req) {
-<span class="nc" id="L164">        String id = null;</span>
-        try {
-            // If your DTO has getToAccountId() as String, use it:
-<span class="nc" id="L167">            id = safeTrim(String.valueOf(req.getToAccountId()));</span>
-<span class="nc" id="L168">        } catch (NoSuchMethodError | Exception ignore) {</span>
-<span class="nc" id="L169">        }</span>
-<span class="nc bnc" id="L170" title="All 2 branches missed.">        if (isBlank(id)) {</span>
-<span class="nc" id="L171">            id = safeTrim(req.getDestinationAccountId()); // fallback</span>
+<span class="fc" id="L165">        String id = req.getDestinationAccountId();</span>
+<span class="pc bpc" id="L166" title="2 of 4 branches missed.">        if (id == null || id.isBlank()) {</span>
+<span class="nc" id="L167">            Long to = req.getToAccountId();</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">            id = to != null ? String.valueOf(to) : null;</span>
         }
-<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (isBlank(id)) {</span>
-<span class="nc" id="L174">            throw new IllegalArgumentException(&quot;Missing toAccountId/destinationAccountId&quot;);</span>
-        }
-<span class="nc" id="L176">        return id;</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">        return id != null ? id.trim() : null;</span>
     }
-
-    private static boolean isBlank(String s) {
-<span class="nc bnc" id="L180" title="All 4 branches missed.">        return s == null || s.trim().isEmpty();</span>
-    }
-
-    private static String safeTrim(String s) {
-<span class="nc bnc" id="L184" title="All 2 branches missed.">        return s == null ? null : s.trim();</span>
-    }
-
-    // =========================
-    // Transaction history (Page)
-    // =========================
 
     @Override
-    public Page&lt;TransactionLog&gt; getAccountTransactions(
+    @Transactional(readOnly = true)
+    public Page&lt;TransactionLogResponse&gt; getAccountTransactions(
             String accountId,
-            OffsetDateTime from,
-            OffsetDateTime to,
+            Instant from,
+            Instant to,
             TransactionStatus status,
-            TransferService.Direction direction,
+            Direction direction,
             Pageable pageable
     ) {
-        // Base spec: involve the account either as sender or receiver
-<span class="nc" id="L201">        Specification&lt;TransactionLog&gt; spec = where(TransactionLogSpecs.forAccount(accountId))</span>
-<span class="nc" id="L202">                .and(TransactionLogSpecs.createdOnFrom(from))</span>
-<span class="nc" id="L203">                .and(TransactionLogSpecs.createdOnTo(to))</span>
-<span class="nc" id="L204">                .and(TransactionLogSpecs.status(status));</span>
+<span class="nc" id="L183">        Long accountIdLong = parseAccountId(accountId, &quot;account&quot;);</span>
+<span class="nc" id="L184">        Specification&lt;TransactionLog&gt; spec = where(TransactionLogSpecs.forAccount(accountIdLong))</span>
+<span class="nc" id="L185">                .and(TransactionLogSpecs.createdOnFrom(from))</span>
+<span class="nc" id="L186">                .and(TransactionLogSpecs.createdOnTo(to))</span>
+<span class="nc" id="L187">                .and(TransactionLogSpecs.status(status));</span>
 
-        // Direction filter if requested
-<span class="nc bnc" id="L207" title="All 2 branches missed.">        if (direction == TransferService.Direction.SENT) {</span>
-<span class="nc" id="L208">            spec = where(TransactionLogSpecs.directionSentOnly(accountId))</span>
-<span class="nc" id="L209">                    .and(TransactionLogSpecs.createdOnFrom(from))</span>
-<span class="nc" id="L210">                    .and(TransactionLogSpecs.createdOnTo(to))</span>
-<span class="nc" id="L211">                    .and(TransactionLogSpecs.status(status));</span>
-<span class="nc bnc" id="L212" title="All 2 branches missed.">        } else if (direction == TransferService.Direction.RECEIVED) {</span>
-<span class="nc" id="L213">            spec = where(TransactionLogSpecs.directionReceivedOnly(accountId))</span>
-<span class="nc" id="L214">                    .and(TransactionLogSpecs.createdOnFrom(from))</span>
-<span class="nc" id="L215">                    .and(TransactionLogSpecs.createdOnTo(to))</span>
-<span class="nc" id="L216">                    .and(TransactionLogSpecs.status(status));</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (direction == Direction.SENT) {</span>
+<span class="nc" id="L190">            spec = where(TransactionLogSpecs.directionSentOnly(accountIdLong))</span>
+<span class="nc" id="L191">                    .and(TransactionLogSpecs.createdOnFrom(from))</span>
+<span class="nc" id="L192">                    .and(TransactionLogSpecs.createdOnTo(to))</span>
+<span class="nc" id="L193">                    .and(TransactionLogSpecs.status(status));</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        } else if (direction == Direction.RECEIVED) {</span>
+<span class="nc" id="L195">            spec = where(TransactionLogSpecs.directionReceivedOnly(accountIdLong))</span>
+<span class="nc" id="L196">                    .and(TransactionLogSpecs.createdOnFrom(from))</span>
+<span class="nc" id="L197">                    .and(TransactionLogSpecs.createdOnTo(to))</span>
+<span class="nc" id="L198">                    .and(TransactionLogSpecs.status(status));</span>
         }
 
-<span class="nc" id="L219">        return logRepository.findAll(spec, pageable)</span>
-<span class="nc" id="L220">                .map(TransactionMapper::toDTO);</span>
+<span class="nc" id="L201">        return logRepository.findAll(spec, pageable).map(TransactionMapper::toResponse);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

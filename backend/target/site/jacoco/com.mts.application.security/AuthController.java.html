@@ -26,39 +26,39 @@ public class AuthController {
     public AuthController(AuthenticationManager authManager,
                           JwtEncoder jwtEncoder,
                           @Value(&quot;${security.jwt.expiry-minutes}&quot;) long expiryMinutes,
-<span class="nc" id="L29">                          @Value(&quot;${security.jwt.issuer}&quot;) String issuer) {</span>
-<span class="nc" id="L30">        this.authManager = authManager;</span>
-<span class="nc" id="L31">        this.jwtEncoder = jwtEncoder;</span>
-<span class="nc" id="L32">        this.expiryMinutes = expiryMinutes;</span>
-<span class="nc" id="L33">        this.issuer = issuer;</span>
-<span class="nc" id="L34">    }</span>
+<span class="fc" id="L29">                          @Value(&quot;${security.jwt.issuer}&quot;) String issuer) {</span>
+<span class="fc" id="L30">        this.authManager = authManager;</span>
+<span class="fc" id="L31">        this.jwtEncoder = jwtEncoder;</span>
+<span class="fc" id="L32">        this.expiryMinutes = expiryMinutes;</span>
+<span class="fc" id="L33">        this.issuer = issuer;</span>
+<span class="fc" id="L34">    }</span>
 
     @PostMapping(&quot;/login&quot;)
     public ResponseEntity&lt;LoginResponse&gt; login(@RequestBody LoginRequest req) {
-<span class="nc" id="L38">        Authentication auth = authManager.authenticate(</span>
-<span class="nc" id="L39">                new UsernamePasswordAuthenticationToken(req.username(), req.password())</span>
+<span class="fc" id="L38">        Authentication auth = authManager.authenticate(</span>
+<span class="fc" id="L39">                new UsernamePasswordAuthenticationToken(req.username(), req.password())</span>
         );
 
-<span class="nc" id="L42">        Instant now = Instant.now();</span>
-<span class="nc" id="L43">        Instant exp = now.plusSeconds(expiryMinutes * 60);</span>
+<span class="fc" id="L42">        Instant now = Instant.now();</span>
+<span class="fc" id="L43">        Instant exp = now.plusSeconds(expiryMinutes * 60);</span>
 
         // Build scope string from authorities that start with SCOPE_
-<span class="nc" id="L46">        String scope = auth.getAuthorities().stream()</span>
-<span class="nc" id="L47">                .map(GrantedAuthority::getAuthority)</span>
-<span class="nc" id="L48">                .filter(a -&gt; a.startsWith(&quot;SCOPE_&quot;))</span>
-<span class="nc" id="L49">                .map(a -&gt; a.substring(&quot;SCOPE_&quot;.length()))</span>
-<span class="nc" id="L50">                .collect(Collectors.joining(&quot; &quot;));</span>
+<span class="fc" id="L46">        String scope = auth.getAuthorities().stream()</span>
+<span class="fc" id="L47">                .map(GrantedAuthority::getAuthority)</span>
+<span class="pc" id="L48">                .filter(a -&gt; a.startsWith(&quot;SCOPE_&quot;))</span>
+<span class="pc" id="L49">                .map(a -&gt; a.substring(&quot;SCOPE_&quot;.length()))</span>
+<span class="fc" id="L50">                .collect(Collectors.joining(&quot; &quot;));</span>
 
-<span class="nc" id="L52">        JwtClaimsSet claims = JwtClaimsSet.builder()</span>
-<span class="nc" id="L53">                .issuer(issuer)</span>
-<span class="nc" id="L54">                .issuedAt(now)</span>
-<span class="nc" id="L55">                .expiresAt(exp)</span>
-<span class="nc" id="L56">                .subject(auth.getName())</span>
-<span class="nc" id="L57">                .claim(&quot;scope&quot;, scope)</span>
-<span class="nc" id="L58">                .build();</span>
+<span class="fc" id="L52">        JwtClaimsSet claims = JwtClaimsSet.builder()</span>
+<span class="fc" id="L53">                .issuer(issuer)</span>
+<span class="fc" id="L54">                .issuedAt(now)</span>
+<span class="fc" id="L55">                .expiresAt(exp)</span>
+<span class="fc" id="L56">                .subject(auth.getName())</span>
+<span class="fc" id="L57">                .claim(&quot;scope&quot;, scope)</span>
+<span class="fc" id="L58">                .build();</span>
 
-<span class="nc" id="L60">        String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();</span>
-<span class="nc" id="L61">        return ResponseEntity.ok(new LoginResponse(&quot;Bearer&quot;, token, expiryMinutes * 60));</span>
+<span class="fc" id="L60">        String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();</span>
+<span class="fc" id="L61">        return ResponseEntity.ok(new LoginResponse(&quot;Bearer&quot;, token, expiryMinutes * 60));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

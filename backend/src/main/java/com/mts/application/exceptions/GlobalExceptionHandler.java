@@ -4,6 +4,7 @@ import com.mts.domain.exceptions.AccountNotActiveException;
 import com.mts.domain.exceptions.AccountNotFoundException;
 import com.mts.domain.exceptions.DuplicateTransferException;
 import com.mts.domain.exceptions.InsufficientBalanceException;
+import com.mts.domain.exceptions.OptimisticLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +75,18 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(
+            OptimisticLockException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                "CONCURRENT_MODIFICATION",
+                ex.getMessage(),
+                HttpStatus.CONFLICT,
+                request,
+                null
+        );
+    }
+
     // ===== Persistence / Idempotency conflicts =====
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -110,7 +123,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 "VALIDATION_FAILED",
                 "One or more fields are invalid",
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.UNPROCESSABLE_ENTITY,
                 request,
                 details
         );
@@ -132,7 +145,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 "CONSTRAINT_VIOLATION",
                 "Validation constraints violated",
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.UNPROCESSABLE_ENTITY,
                 request,
                 details
         );

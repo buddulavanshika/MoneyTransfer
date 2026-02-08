@@ -1,21 +1,23 @@
-// com.mts.application.mappers.TransactionMapper
 package com.mts.application.mapper;
+
 import com.mts.application.entities.TransactionLog;
+import com.mts.domain.dto.TransactionLogResponse;
 
 public final class TransactionMapper {
     private TransactionMapper() {}
 
-    public static TransactionLog toDTO(TransactionLog l) {
-        TransactionLog dto = new TransactionLog();
-        dto.setId(l.getId());
-        dto.setIdempotencyKey(l.getIdempotencyKey());
-        dto.setFromAccountId(l.getFromAccountId());
-        dto.setToAccountId(l.getToAccountId());
-        dto.setAmount(l.getAmount());
-        dto.setCurrency(l.getCurrency());
-        dto.setStatus(l.getStatus());
-        dto.setFailureReason(l.getFailureReason());
-        dto.setCreatedOn(l.getCreatedOn());
-        return dto;
+    public static TransactionLogResponse toResponse(TransactionLog entity) {
+        if (entity == null) return null;
+        return new TransactionLogResponse(
+                entity.getId(),
+                entity.getFromAccountId(),
+                entity.getToAccountId(),
+                entity.getAmount(),
+                entity.getCurrency(),
+                entity.getStatus(),
+                entity.getFailureReason(),
+                entity.getIdempotencyKey(),
+                entity.getCreatedOn()
+        );
     }
 }

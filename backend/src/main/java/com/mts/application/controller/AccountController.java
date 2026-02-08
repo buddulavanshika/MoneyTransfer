@@ -36,7 +36,7 @@ public class AccountController {
 
     private AccountResponse toResponse(Account a) {
         AccountResponse dto = new AccountResponse();
-        dto.setId(Long.valueOf(a.getId())); // both are String
+        dto.setId(a.getId());
         dto.setHolderName(a.getHolderName());
         dto.setBalance(a.getBalance());
         dto.setStatus(a.getStatus() != null ? a.getStatus().name() : null);
