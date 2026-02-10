@@ -23,26 +23,29 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
         UserDetails apiUser = User.withUsername("api-user")
                 .password(encoder.encode("Passw0rd!"))
-                .roles("USER") // translates to ROLE_USER
-                // these become SCOPE_* at runtime via JwtGrantedAuthoritiesConverter
-                .authorities("SCOPE_transfers.read", "SCOPE_transfers.write")
+                .roles("USER") // maps to ROLE_USER
+                .authorities(
+                        "SCOPE_transfers.read",
+                        "SCOPE_transfers.write"
+                )
                 .build();
+
         return new InMemoryUserDetailsManager(apiUser);
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // strong hash
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
     }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // Convert "scope" claim → SCOPE_* authorities
+
+        // Convert JWT "scope" claim → SCOPE_* authorities
         JwtGrantedAuthoritiesConverter scopes = new JwtGrantedAuthoritiesConverter();
         scopes.setAuthorityPrefix("SCOPE_");
         scopes.setAuthoritiesClaimName("scope");
@@ -54,10 +57,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+
                         // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Swagger/OpenAPI
+                        // Swagger / API docs
                         .requestMatchers(
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
@@ -66,8 +70,8 @@ public class SecurityConfig {
                                 "/doc.html"
                         ).permitAll()
 
-                        // Protect all /api/** endpoints
-                        .requestMatchers("/api/**").permitAll()
+                        // 🔥 Scope-based protection
+                        .requestMatchers("/api/**").hasAuthority("SCOPE_transfers.read")
 
                         .anyRequest().authenticated()
                 )
@@ -77,8 +81,8 @@ public class SecurityConfig {
                             res.setStatus(401);
                             res.setContentType("application/json");
                             res.getWriter().write("""
-                                {"code":"UNAUTHORIZED","message":"Bearer token missing or invalid"}
-                            """);
+                            {"code":"UNAUTHORIZED","message":"Bearer token missing or invalid"}
+                        """);
                         })
                 )
                 .exceptionHandling(eh -> eh
@@ -86,8 +90,8 @@ public class SecurityConfig {
                             res.setStatus(403);
                             res.setContentType("application/json");
                             res.getWriter().write("""
-                                {"code":"FORBIDDEN","message":"Insufficient permissions"}
-                            """);
+                            {"code":"FORBIDDEN","message":"Insufficient permissions"}
+                        """);
                         })
                 );
 
