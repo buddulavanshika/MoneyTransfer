@@ -2,6 +2,7 @@ package com.mts.application.entities;
 
 import com.mts.domain.enums.AccountStatus;
 import com.mts.domain.exceptions.AccountNotActiveException;
+import com.mts.domain.exceptions.InsufficientBalanceException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -50,7 +51,7 @@ public class Account {
             throw new IllegalArgumentException("Amount must be positive");
         }
         if (this.balance.compareTo(amount) < 0) {
-            throw new IllegalStateException("Insufficient balance");
+            throw new InsufficientBalanceException("Insufficient balance in account: " + this.id);
         }
         this.balance = this.balance.subtract(amount).setScale(2, RoundingMode.HALF_UP);
         this.lastUpdated = Instant.now();
@@ -67,7 +68,7 @@ public class Account {
 
     private void ensureActive() {
         if (this.status != AccountStatus.ACTIVE) {
-            throw new AccountNotActiveException("Account " + id + " is not ACTIVE");
+            throw new AccountNotActiveException("Account " + this.id + " is not ACTIVE");
         }
     }
 

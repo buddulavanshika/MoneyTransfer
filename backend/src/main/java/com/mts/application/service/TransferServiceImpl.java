@@ -10,9 +10,7 @@ import com.mts.domain.dto.TransferRequest;
 import com.mts.domain.dto.TransferResponse;
 import com.mts.domain.dto.TransactionLogResponse;
 import com.mts.domain.enums.TransactionStatus;
-import com.mts.domain.exceptions.DuplicateTransferException;
-import com.mts.domain.exceptions.InsufficientBalanceException;
-import com.mts.domain.exceptions.OptimisticLockException;
+import com.mts.domain.exceptions.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -48,7 +46,7 @@ public class TransferServiceImpl implements TransferService {
 
         // 1) Idempotency: reject if key already used
         if (logRepository.findByIdempotencyKey(request.getIdempotencyKey()).isPresent()) {
-            throw new DuplicateTransferException("Duplicate transfer request (idempotency key already used)");
+            throw new DuplicateTransferException("Duplicate transfer request: "+request.getIdempotencyKey()+" (idempotency key already used)");
         }
 
         // 2) Create and persist PENDING log to claim idempotency (unique constraint enforces at DB level)
@@ -76,15 +74,9 @@ public class TransferServiceImpl implements TransferService {
             Account receiver = accountService.getAccountById(toIdStr);
 
             // 4) Debit and credit (may throw InsufficientBalanceException / AccountNotActiveException)
-            try {
-                sender.debit(request.getAmount());
-                receiver.credit(request.getAmount());
-            } catch (IllegalStateException e) {
-                if (e.getMessage() != null && e.getMessage().contains("Insufficient balance")) {
-                    throw new InsufficientBalanceException(e.getMessage());
-                }
-                throw e;
-            }
+
+            sender.debit(request.getAmount());
+            receiver.credit(request.getAmount());
 
             // 5) Persist updated accounts (optimistic lock may throw here)
             accountRepository.saveAndFlush(sender);
@@ -92,17 +84,11 @@ public class TransferServiceImpl implements TransferService {
 
             // 6) Mark SUCCESS and persist log
             log.setStatus(TransactionStatus.SUCCESS);
-            log.setFailureReason(null);
             logRepository.save(log);
 
             return buildSuccessResponse(log, fromIdStr, toIdStr, request);
 
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.setStatus(TransactionStatus.FAILED);
-            log.setFailureReason("Concurrent modification conflict");
-            logRepository.save(log);
-            throw new OptimisticLockException("Account was modified by another transaction; please retry", e);
-        } catch (Exception e) {
+        } catch (InsufficientBalanceException | AccountNotActiveException | AccountNotFoundException| OptimisticLockException e) {
             log.setStatus(TransactionStatus.FAILED);
             log.setFailureReason(e.getMessage());
             logRepository.save(log);
