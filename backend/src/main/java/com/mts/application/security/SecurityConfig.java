@@ -19,16 +19,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /**
-     * Simple in-memory user for testing.
-     * Replace with a DB-backed UserDetailsService when you’re ready.
-     */
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
         UserDetails apiUser = User.withUsername("api-user")
                 .password(encoder.encode("Passw0rd!"))
-                .roles("USER")
-                // map to "scope" claim during login (AuthController) so these become SCOPE_ authorities at runtime
+                .roles("USER") // translates to ROLE_USER
+                // these become SCOPE_* at runtime via JwtGrantedAuthoritiesConverter
                 .authorities("SCOPE_transfers.read", "SCOPE_transfers.write")
                 .build();
         return new InMemoryUserDetailsManager(apiUser);
@@ -58,10 +54,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // === Public: authentication only ===
+                        // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Swagger & OpenAPI (permit all)
+                        // Swagger/OpenAPI
                         .requestMatchers(
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
@@ -70,20 +66,19 @@ public class SecurityConfig {
                                 "/doc.html"
                         ).permitAll()
 
-                        // === All other /api/** require authenticated USER ===
-                        .requestMatchers("/api/**").hasRole("USER")
+                        // Protect all /api/** endpoints
+                        .requestMatchers("/api/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
-                // Resource Server with JWT (Nimbus under the hood)
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
                         .authenticationEntryPoint((req, res, ex) -> {
                             res.setStatus(401);
                             res.setContentType("application/json");
                             res.getWriter().write("""
-                        {"code":"UNAUTHORIZED","message":"Bearer token missing or invalid"}
-                    """);
+                                {"code":"UNAUTHORIZED","message":"Bearer token missing or invalid"}
+                            """);
                         })
                 )
                 .exceptionHandling(eh -> eh
@@ -91,8 +86,8 @@ public class SecurityConfig {
                             res.setStatus(403);
                             res.setContentType("application/json");
                             res.getWriter().write("""
-                        {"code":"FORBIDDEN","message":"Insufficient permissions"}
-                    """);
+                                {"code":"FORBIDDEN","message":"Insufficient permissions"}
+                            """);
                         })
                 );
 

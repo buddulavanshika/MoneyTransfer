@@ -1,8 +1,5 @@
 package com.mts.application.security;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,21 +18,20 @@ public class JwtConfig {
     private String issuer;
 
     private SecretKeySpec hs256Key() {
-        byte[] keyBytes = Base64.getDecoder().decode(secretBase64);
+        if (secretBase64 == null) {
+            throw new IllegalArgumentException("security.jwt.secret is not set");
+        }
+        String s = secretBase64.trim();
+        if ((s.startsWith("\"") && s.endsWith("\"")) || (s.startsWith("'") && s.endsWith("'"))) {
+            s = s.substring(1, s.length() - 1);
+        }
+        s = s.replaceAll("\\s", "");
+
+        byte[] keyBytes = Base64.getDecoder().decode(s);
         if (keyBytes.length < 32) {
-            throw new IllegalArgumentException("security.jwt.secret must decode to >= 32 bytes for HS256");
+            throw new IllegalArgumentException("security.jwt.secret must decode to >= 32 bytes for HS256; got " + keyBytes.length + " bytes");
         }
         return new SecretKeySpec(keyBytes, "HmacSHA256");
-    }
-
-    @Bean
-    public JwtEncoder jwtEncoder() {
-        var key = hs256Key();
-        // Advertise HS256 on the JWK so NimbusJwtEncoder can auto-pick it
-        var jwk = new OctetSequenceKey.Builder(key)
-                .algorithm(JWSAlgorithm.HS256)
-                .build();
-        return new NimbusJwtEncoder(new ImmutableSecret<>(jwk.toSecretKey()));
     }
 
     @Bean
