@@ -122,10 +122,6 @@ public class MoneyTransferDomainService {
             throw new IllegalArgumentException("Idempotency key must be provided");
         }
 
-        // If your Account tracks currency, enforce matching currency here.
-        // Example:
-        // if (!Objects.equals(from.getCurrency(), amount.getCurrency()) ||
-        //     !Objects.equals(to.getCurrency(), amount.getCurrency())) { ... }
     }
 
     private void ensureActive(Account account) {

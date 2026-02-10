@@ -6,7 +6,9 @@ import com.mts.domain.exceptions.DuplicateTransferException;
 import com.mts.domain.exceptions.InsufficientBalanceException;
 import com.mts.domain.exceptions.OptimisticLockException;
 import org.springframework.dao.DataIntegrityViolationException;
+import com.mts.domain.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice; // Prefer this to get JSON by default
@@ -123,12 +125,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 "VALIDATION_FAILED",
                 "One or more fields are invalid",
-                HttpStatus.UNPROCESSABLE_ENTITY,
+                HttpStatusCode.valueOf(422),
                 request,
                 details
         );
     }
-
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(
             ConstraintViolationException ex, HttpServletRequest request) {
@@ -145,7 +146,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 "CONSTRAINT_VIOLATION",
                 "Validation constraints violated",
-                HttpStatus.UNPROCESSABLE_ENTITY,
+                HttpStatusCode.valueOf(422),
                 request,
                 details
         );
@@ -155,9 +156,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
 
+        Class<?> requiredType = ex.getRequiredType();
+
         Map<String, Object> details = Map.of(
                 "name", ex.getName(),
-                "requiredType", ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : null,
+                "requiredType", requiredType != null ? requiredType.getSimpleName() : null,
                 "value", ex.getValue()
         );
 
@@ -205,7 +208,7 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             String code,
             String message,
-            HttpStatus status,
+            HttpStatusCode status,
             HttpServletRequest request,
             Map<String, Object> details
     ) {
@@ -229,32 +232,4 @@ public class GlobalExceptionHandler {
         return (cid == null || cid.isBlank()) ? null : cid;
     }
 
-    public static final class ErrorResponse {
-        private final String code;
-        private final String message;
-        private final int status;
-        private final String path;
-        private final String timestamp;
-        private final String correlationId;
-        private final Map<String, Object> details;
-
-        public ErrorResponse(String code, String message, int status, String path,
-                             String timestamp, String correlationId, Map<String, Object> details) {
-            this.code = code;
-            this.message = message;
-            this.status = status;
-            this.path = path;
-            this.timestamp = timestamp;
-            this.correlationId = correlationId;
-            this.details = details;
-        }
-
-        public String getCode() { return code; }
-        public String getMessage() { return message; }
-        public int getStatus() { return status; }
-        public String getPath() { return path; }
-        public String getTimestamp() { return timestamp; }
-        public String getCorrelationId() { return correlationId; }
-        public Map<String, Object> getDetails() { return details; }
-    }
 }
