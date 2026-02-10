@@ -1,17 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.mts.application.service.TransferServiceImplTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 1.332 s <<< FAILURE! -- in com.mts.application.service.TransferServiceImplTest
-com.mts.application.service.TransferServiceImplTest.transfer_optimisticLockConflict_throws -- Time elapsed: 0.031 s <<< FAILURE!
-java.lang.AssertionError: 
-
-Expecting actual throwable to be an instance of:
-  com.mts.domain.exceptions.OptimisticLockException
-but was:
-  org.springframework.orm.ObjectOptimisticLockingFailureException: Object of class [com.mts.application.entities.Account] with identifier [1]: optimistic locking failed
-	at com.mts.application.service.TransferServiceImpl.transfer(TransferServiceImpl.java:82)
-	at com.mts.application.service.TransferServiceImplTest.lambda$transfer_optimisticLockConflict_throws$13(TransferServiceImplTest.java:160)
-	at org.assertj.core.api.ThrowableAssert.catchThrowable(ThrowableAssert.java:63)
-	...(84 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
-	at com.mts.application.service.TransferServiceImplTest.transfer_optimisticLockConflict_throws(TransferServiceImplTest.java:161)
-
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.467 s -- in com.mts.application.service.TransferServiceImplTest

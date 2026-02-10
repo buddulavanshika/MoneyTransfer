@@ -3,7 +3,6 @@ com\mts\application\repository\TransactionLogRepository.class
 com\mts\domain\exceptions\AccountNotFoundException.class
 com\mts\application\entities\Account$AccountBuilder.class
 com\mts\domain\enums\AccountStatus.class
-com\mts\application\exceptions\GlobalExceptionHandler$ErrorResponse.class
 com\mts\application\security\payload\AuthDtos$LoginResponse.class
 com\mts\application\entities\Account.class
 com\mts\application\repository\AccountRepository.class

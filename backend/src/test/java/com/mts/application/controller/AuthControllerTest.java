@@ -2,6 +2,7 @@ package com.mts.application.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mts.application.security.AuthController;
+import com.mts.application.security.TokenService;
 import com.mts.application.security.payload.AuthDtos;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class AuthControllerTest {
     @MockitoBean
     private JwtEncoder jwtEncoder;
 
+    @MockitoBean
+    private TokenService tokenService;
+
     @Test
     @DisplayName("POST /api/auth/login with valid credentials returns 200 and token")
     void login_success() throws Exception {
@@ -50,6 +54,11 @@ class AuthControllerTest {
         Authentication auth = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
                 .authenticated("api-user", null, List.of());
         when(authenticationManager.authenticate(any())).thenReturn(auth);
+
+        when(tokenService.generateToken(any(), any(), any(), any()))
+                .thenReturn("mock-jwt");
+
+
         when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
                 .thenReturn(Jwt.withTokenValue("mock-jwt").header("alg", "HS256")
                         .claim("sub", "api-user").claim("scope", "transfers.read transfers.write")
