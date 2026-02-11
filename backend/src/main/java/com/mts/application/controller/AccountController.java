@@ -21,16 +21,16 @@ public class AccountController {
 
     @Operation(summary = "Get account details by account ID")
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) {
-        Account account = accountService.getAccountById(id); // expects String
+    public ResponseEntity<AccountResponse> getAccount(@PathVariable Long id) {
+        Account account = accountService.getAccountById(String.valueOf(id));
         AccountResponse dto = toResponse(account);
         return ResponseEntity.ok(dto);
     }
 
     @Operation(summary = "Get account balance")
     @GetMapping("/{id}/balance")
-    public ResponseEntity<BigDecimal> getBalance(@PathVariable String id) {
-        BigDecimal balance = accountService.getBalance(id); // expects String
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long id) {
+        BigDecimal balance = accountService.getBalance(String.valueOf(id));
         return ResponseEntity.ok(balance);
     }
 

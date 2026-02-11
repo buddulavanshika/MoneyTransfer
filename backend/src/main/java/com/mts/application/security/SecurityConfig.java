@@ -19,7 +19,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -27,16 +26,26 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails apiUser = User.withUsername("api-user")
-                .password(encoder.encode("Passw0rd!"))
-                .roles("USER") // maps to ROLE_USER
+        // Create users matching the account holder names from seed-data.sql
+        UserDetails alice = User.withUsername("Alice")
+                .password(encoder.encode("password123"))
+                .roles("USER")
                 .authorities(
                         "SCOPE_transfers.read",
                         "SCOPE_transfers.write"
                 )
                 .build();
 
-        return new InMemoryUserDetailsManager(apiUser);
+        UserDetails bob = User.withUsername("Bob")
+                .password(encoder.encode("password123"))
+                .roles("USER")
+                .authorities(
+                        "SCOPE_transfers.read",
+                        "SCOPE_transfers.write"
+                )
+                .build();
+
+        return new InMemoryUserDetailsManager(alice, bob);
     }
 
     @Bean
@@ -49,32 +58,18 @@ public class SecurityConfig {
         return cfg.getAuthenticationManager();
     }
 
-    // ✅ ADD THIS METHOD - CORS Configuration
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Allow Angular frontend
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-
-        // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
-
-        // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
-
-        // Expose Authorization header to frontend
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
-
-        // Cache preflight requests for 1 hour
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 
@@ -90,13 +85,10 @@ public class SecurityConfig {
         jwtAuthConverter.setJwtGrantedAuthoritiesConverter(scopes);
 
         http
-                // ✅ ENABLE CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-
                         // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
 
@@ -109,29 +101,13 @@ public class SecurityConfig {
                                 "/doc.html"
                         ).permitAll()
 
-                        // 🔥 Scope-based protection
+                        // All API endpoints require transfers.read scope
                         .requestMatchers("/api/**").hasAuthority("SCOPE_transfers.read")
 
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
-                        .authenticationEntryPoint((req, res, ex) -> {
-                            res.setStatus(401);
-                            res.setContentType("application/json");
-                            res.getWriter().write("""
-                            {"code":"UNAUTHORIZED","message":"Bearer token missing or invalid"}
-                        """);
-                        })
-                )
-                .exceptionHandling(eh -> eh
-                        .accessDeniedHandler((req, res, ex) -> {
-                            res.setStatus(403);
-                            res.setContentType("application/json");
-                            res.getWriter().write("""
-                            {"code":"FORBIDDEN","message":"Insufficient permissions"}
-                        """);
-                        })
                 );
 
         return http.build();

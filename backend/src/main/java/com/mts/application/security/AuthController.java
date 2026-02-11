@@ -1,5 +1,7 @@
 package com.mts.application.security;
 
+import com.mts.application.entities.Account;
+import com.mts.application.repository.AccountRepository;
 import com.mts.application.security.payload.AuthDtos.LoginRequest;
 import com.mts.application.security.payload.AuthDtos.LoginResponse;
 import jakarta.validation.Valid;
@@ -20,21 +22,24 @@ public class AuthController {
 
     private final AuthenticationManager authManager;
     private final TokenService tokenService;
+    private final AccountRepository accountRepository;
     private final long expiryMinutes;
     private final String issuer;
 
     public AuthController(AuthenticationManager authManager,
                           TokenService tokenService,
+                          AccountRepository accountRepository,
                           @Value("${security.jwt.expiry-minutes}") long expiryMinutes,
                           @Value("${security.jwt.issuer}") String issuer) {
         this.authManager = authManager;
         this.tokenService = tokenService;
+        this.accountRepository = accountRepository;
         this.expiryMinutes = expiryMinutes;
         this.issuer = issuer;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         try {
             Authentication auth = authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(req.username(), req.password())
@@ -52,26 +57,39 @@ public class AuthController {
 
             String token = tokenService.generateToken(auth.getName(), scope, now, exp);
 
-            return ResponseEntity.ok(new LoginResponse("Bearer", token, expirySeconds));
+            // Find account by holder name (username matches holder name)
+            Account account = accountRepository.findByHolderName(req.username())
+                    .orElseThrow(() -> new RuntimeException("Account not found for user: " + req.username()));
+
+            return ResponseEntity.ok(new LoginResponse(token, account.getId(), account.getHolderName()));
+
         } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(401).body(new LoginResponse("error", "BAD_CREDENTIALS", 0));
+            return ResponseEntity.status(401)
+                    .body(new ErrorResponse("BAD_CREDENTIALS", "Invalid username or password"));
         } catch (DisabledException ex) {
-            return ResponseEntity.status(403).body(new LoginResponse("error", "USER_DISABLED", 0));
+            return ResponseEntity.status(403)
+                    .body(new ErrorResponse("USER_DISABLED", "User account is disabled"));
         } catch (LockedException ex) {
-            return ResponseEntity.status(423).body(new LoginResponse("error", "USER_LOCKED", 0));
+            return ResponseEntity.status(423)
+                    .body(new ErrorResponse("USER_LOCKED", "User account is locked"));
         } catch (IllegalArgumentException ex) {
-            // from secret validation
             ex.printStackTrace();
-            return ResponseEntity.status(400).body(new LoginResponse("error", ex.getMessage(), 0));
+            return ResponseEntity.status(400)
+                    .body(new ErrorResponse("INVALID_REQUEST", ex.getMessage()));
         } catch (AuthenticationException ex) {
-            return ResponseEntity.status(401).body(new LoginResponse("error", "AUTHENTICATION_FAILED", 0));
+            return ResponseEntity.status(401)
+                    .body(new ErrorResponse("AUTHENTICATION_FAILED", "Authentication failed"));
         } catch (RuntimeException ex) {
-            // TOKEN_SIGNING_FAILED
             ex.printStackTrace();
-            return ResponseEntity.status(500).body(new LoginResponse("error", "TOKEN_GENERATION_FAILED", 0));
+            return ResponseEntity.status(500)
+                    .body(new ErrorResponse("INTERNAL_ERROR", ex.getMessage()));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500).body(new LoginResponse("error", "TOKEN_GENERATION_FAILED", 0));
+            return ResponseEntity.status(500)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"));
         }
     }
+
+    // Error response for login failures
+    private record ErrorResponse(String code, String message) {}
 }

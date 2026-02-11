@@ -1,6 +1,7 @@
 C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\config\OpenApiConfig.java
 C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\config\ServiceLoggingAspect.java
 C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\controller\AccountController.java
+C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\controller\TestController.java
 C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\controller\TransferController.java
 C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\entities\Account.java
 C:\Training\MoneyTransfer\backend\src\main\java\com\mts\application\entities\TransactionLog.java

@@ -4,5 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 
 public class AuthDtos {
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {}
-    public record LoginResponse(String tokenType, String accessToken, long expiresIn) {}
+    public record LoginResponse(
+            String token,
+            Long accountId,
+            String holderName
+    ) {}
 }
