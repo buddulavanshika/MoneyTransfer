@@ -5,6 +5,7 @@ import com.mts.domain.dto.TransferRequest;
 import com.mts.domain.dto.TransferResponse;
 import com.mts.domain.dto.TransactionLogResponse;
 import com.mts.domain.enums.TransactionStatus;
+import com.mts.domain.exceptions.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -50,7 +51,7 @@ public class TransferController {
             }
     )
     @PostMapping("/transfers")
-    public ResponseEntity<TransferResponse> executeTransfer(
+    public ResponseEntity<TransferResponse> executeTransfer (
             @Valid @RequestBody
             @Parameter(description = "Transfer details (from, to, amount, currency, idempotencyKey)")
             TransferRequest request,
@@ -58,7 +59,7 @@ public class TransferController {
             @RequestHeader(value = "Idempotency-Key", required = false)
             @Parameter(description = "Optional idempotency key header to prevent duplicate transfers")
             String idempotencyKey
-    ) {
+    )throws AccountNotFoundException, AccountNotActiveException, InsufficientBalanceException, DuplicateTransferException, OptimisticLockException {
         TransferResponse response = transferService.transfer(request);
         return ResponseEntity.ok(response);
     }

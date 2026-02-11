@@ -1,7 +1,7 @@
 package com.mts.domain.exceptions;
 
 
-public class AccountNotActiveException extends RuntimeException {
+public class AccountNotActiveException extends Exception {
 
     public AccountNotActiveException(String message) {
         super(message);

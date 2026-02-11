@@ -3,6 +3,7 @@ package com.mts.application.controller;
 import com.mts.application.entities.Account;
 import com.mts.application.service.AccountService;
 import com.mts.domain.dto.AccountResponse;
+import com.mts.domain.exceptions.AccountNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class AccountController {
 
     @Operation(summary = "Get account details by account ID")
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) {
+    public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) throws AccountNotFoundException {
         Account account = accountService.getAccountById(id); // expects String
         AccountResponse dto = toResponse(account);
         return ResponseEntity.ok(dto);
@@ -29,7 +30,7 @@ public class AccountController {
 
     @Operation(summary = "Get account balance")
     @GetMapping("/{id}/balance")
-    public ResponseEntity<BigDecimal> getBalance(@PathVariable String id) {
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable String id) throws AccountNotFoundException {
         BigDecimal balance = accountService.getBalance(id); // expects String
         return ResponseEntity.ok(balance);
     }

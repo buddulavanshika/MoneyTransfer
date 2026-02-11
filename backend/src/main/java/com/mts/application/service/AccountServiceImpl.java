@@ -20,7 +20,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public Account getAccountById(String id) {
+    public Account getAccountById(String id) throws AccountNotFoundException {
         Long idLong = parseAccountId(id);
         return accountRepository.findById(idLong)
                 .orElseThrow(() -> new AccountNotFoundException("Account with ID " + id + " not found"));
@@ -28,7 +28,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public BigDecimal getBalance(String id) {
+    public BigDecimal getBalance(String id) throws AccountNotFoundException {
         return getAccountById(id).getBalance();
     }
 
@@ -40,14 +40,17 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public void validateAccountForTransfer(String id) {
+    public void validateAccountForTransfer(String id)
+            throws AccountNotActiveException, AccountNotFoundException {
         Account account = getAccountById(id);
         if (!account.isActive()) {
-            throw new AccountNotActiveException("Account " + id + " is not ACTIVE (status=" + account.getStatus() + ")");
+            throw new AccountNotActiveException(
+                    "Account " + id + " is not ACTIVE (status=" + account.getStatus() + ")"
+            );
         }
     }
 
-    private static Long parseAccountId(String id) {
+    private static Long parseAccountId(String id) throws AccountNotFoundException {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Account id must not be blank");
         }

@@ -1,6 +1,6 @@
 package com.mts.domain.exceptions;
 
-public class InsufficientBalanceException extends RuntimeException {
+public class InsufficientBalanceException extends Exception {
 
     public InsufficientBalanceException() {
         super("Insufficient balance");

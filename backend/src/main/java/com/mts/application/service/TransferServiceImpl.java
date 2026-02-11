@@ -1,4 +1,5 @@
 package com.mts.application.service;
+
 import com.mts.application.entities.Account;
 import com.mts.application.entities.TransactionLog;
 import com.mts.application.mapper.TransactionMapper;
@@ -10,6 +11,7 @@ import com.mts.domain.dto.TransferResponse;
 import com.mts.domain.dto.TransactionLogResponse;
 import com.mts.domain.enums.TransactionStatus;
 import com.mts.domain.exceptions.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,20 +38,25 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional
-    public TransferResponse transfer(TransferRequest request) {
+    public TransferResponse transfer(TransferRequest request)
+            throws AccountNotFoundException,
+            AccountNotActiveException,
+            InsufficientBalanceException,
+            DuplicateTransferException,
+            OptimisticLockException {
+
         String fromIdStr = resolveFromId(request);
         String toIdStr = resolveToId(request);
         Long fromId = parseAccountId(fromIdStr, "source");
         Long toId = parseAccountId(toIdStr, "destination");
 
-        // 1) Idempotency: reject if key already used
+        // 1) Idempotency
         if (logRepository.findByIdempotencyKey(request.getIdempotencyKey()).isPresent()) {
             throw new DuplicateTransferException(
                     "Duplicate transfer request: " + request.getIdempotencyKey() + " (idempotency key already used)");
         }
 
-        // 2) Create and persist PENDING log to claim idempotency (unique constraint
-        // enforces at DB level)
+        // 2) Create and persist PENDING log
         TransactionLog log = new TransactionLog();
         log.setId(UUID.randomUUID().toString());
         log.setIdempotencyKey(request.getIdempotencyKey());
@@ -73,17 +80,15 @@ public class TransferServiceImpl implements TransferService {
             Account sender = accountService.getAccountById(fromIdStr);
             Account receiver = accountService.getAccountById(toIdStr);
 
-            // 4) Debit and credit (may throw InsufficientBalanceException /
-            // AccountNotActiveException)
-
+            // 4) Debit and credit
             sender.debit(request.getAmount());
             receiver.credit(request.getAmount());
 
-            // 5) Persist updated accounts (optimistic lock may throw here)
+            // 5) Persist updated accounts
             accountRepository.saveAndFlush(sender);
             accountRepository.saveAndFlush(receiver);
 
-            // 6) Mark SUCCESS and persist log
+            // 6) Mark SUCCESS
             log.setStatus(TransactionStatus.SUCCESS);
             logRepository.save(log);
 
@@ -95,7 +100,7 @@ public class TransferServiceImpl implements TransferService {
             logRepository.save(log);
             throw new OptimisticLockException("Concurrent modification detected, please retry the transfer", e);
         } catch (InsufficientBalanceException | AccountNotActiveException | AccountNotFoundException
-                 | OptimisticLockException e) {
+                e) {
             log.setStatus(TransactionStatus.FAILED);
             log.setFailureReason(e.getMessage());
             logRepository.save(log);
@@ -103,7 +108,8 @@ public class TransferServiceImpl implements TransferService {
         }
     }
 
-    private void validateTransfer(String fromId, String toId, BigDecimal amount) {
+    private void validateTransfer(String fromId, String toId, BigDecimal amount)
+            throws AccountNotFoundException, AccountNotActiveException {
         if (fromId == null || fromId.isBlank()) {
             throw new IllegalArgumentException("Missing source account id");
         }

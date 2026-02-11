@@ -19,20 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Pure domain service that orchestrates money transfer using domain rules.
  *
- * <p>Responsibilities:
- * <ul>
- *   <li>Validate inputs (accounts, status, amount)</li>
- *   <li>Enforce idempotency (in-memory for Module 2)</li>
- *   <li>Execute business sequence: debit (source) → credit (destination)</li>
- *   <li>Return a SUCCESS {@link TransactionLog} on completion</li>
- * </ul>
- *
- * <p>Notes:
- * <ul>
- *   <li>Failures are represented via domain exceptions; this service does not create failure logs.</li>
- *   <li>In Module 3, idempotency should be persisted (e.g., DB unique constraint) and the service
- *       will be wrapped in a transactional application/service layer.</li>
- * </ul>
+ * Responsibilities:
+ * - Validate inputs (accounts, status, amount)
+ * - Enforce idempotency (in-memory for Module 2)
+ * - Execute business sequence: debit (source) → credit (destination)
+ * - Return a SUCCESS {@link TransactionLog} on completion
  */
 public class MoneyTransferDomainService {
 
@@ -55,22 +46,19 @@ public class MoneyTransferDomainService {
      * @throws AccountNotActiveException    if any account is not ACTIVE
      * @throws IllegalArgumentException     if accounts are same or amount invalid or key blank
      * @throws DuplicateTransferException   if idempotency key was already used
-     * @throws InsufficientBalanceException if source balance is insufficient (mapped here)
+     * @throws InsufficientBalanceException if source balance is insufficient
      */
-    public TransactionLog transfer(Account from, Account to, Money amount, String idempotencyKey) {
+    public TransactionLog transfer(Account from, Account to, Money amount, String idempotencyKey)
+            throws AccountNotFoundException,
+            AccountNotActiveException,
+            DuplicateTransferException,
+            InsufficientBalanceException {
+
         validateInputs(from, to, amount, idempotencyKey);
         enforceIdempotency(idempotencyKey);
 
-        // Debit first; translate insufficient funds into the domain exception expected by tests
-        try {
-            from.debit(amount.getAmount());
-        } catch (IllegalStateException ex) {
-            // Only map the insufficient funds case; keep other IllegalStateExceptions as-is
-            if (ex.getMessage() != null && ex.getMessage().startsWith("Insufficient balance")) {
-                throw new InsufficientBalanceException(ex.getMessage());
-            }
-            throw ex;
-        }
+        // Debit first
+        from.debit(amount.getAmount());
 
         // Credit only after a successful debit
         to.credit(amount.getAmount());
@@ -93,7 +81,11 @@ public class MoneyTransferDomainService {
      * Execute a transfer using an auto-generated idempotency key.
      * Useful for internal flows or tests where explicit keying isn't required.
      */
-    public TransactionLog transfer(Account from, Account to, Money amount) {
+    public TransactionLog transfer(Account from, Account to, Money amount)
+            throws AccountNotFoundException,
+            AccountNotActiveException,
+            DuplicateTransferException,
+            InsufficientBalanceException {
         String autoKey = "AUTO-" + UUID.randomUUID();
         return transfer(from, to, amount, autoKey);
     }
@@ -102,7 +94,8 @@ public class MoneyTransferDomainService {
        Validation & Idempotency
        ========================= */
 
-    private void validateInputs(Account from, Account to, Money amount, String idempotencyKey) {
+    private void validateInputs(Account from, Account to, Money amount, String idempotencyKey)
+            throws AccountNotFoundException, AccountNotActiveException {
         if (from == null) {
             throw new AccountNotFoundException("Source account not found");
         }
@@ -121,16 +114,15 @@ public class MoneyTransferDomainService {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new IllegalArgumentException("Idempotency key must be provided");
         }
-
     }
 
-    private void ensureActive(Account account) {
+    private void ensureActive(Account account) throws AccountNotActiveException {
         if (account.getStatus() != AccountStatus.ACTIVE) {
             throw new AccountNotActiveException("Account " + account.getId() + " is not ACTIVE");
         }
     }
 
-    private void enforceIdempotency(String idempotencyKey) {
+    private void enforceIdempotency(String idempotencyKey) throws DuplicateTransferException {
         boolean firstUse = usedIdempotencyKeys.add(idempotencyKey);
         if (!firstUse) {
             throw new DuplicateTransferException("Duplicate transfer request (idempotency)");

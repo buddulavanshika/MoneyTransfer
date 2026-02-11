@@ -1,6 +1,6 @@
 package com.mts.domain.exceptions;
 
-public class DuplicateTransferException extends RuntimeException {
+public class DuplicateTransferException extends Exception {
 
     public DuplicateTransferException() {
         super("Duplicate transfer detected");

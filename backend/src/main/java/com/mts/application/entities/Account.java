@@ -45,7 +45,7 @@ public class Account {
         this.lastUpdated = Instant.now();
     }
 
-    public void debit(BigDecimal amount) {
+    public void debit(BigDecimal amount) throws AccountNotActiveException,InsufficientBalanceException{
         ensureActive();
         if (amount == null || amount.signum() <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
@@ -57,7 +57,7 @@ public class Account {
         this.lastUpdated = Instant.now();
     }
 
-    public void credit(BigDecimal amount) {
+    public void credit(BigDecimal amount) throws AccountNotActiveException {
         ensureActive();
         if (amount == null || amount.signum() <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
@@ -66,7 +66,7 @@ public class Account {
         this.lastUpdated = Instant.now();
     }
 
-    private void ensureActive() {
+    private void ensureActive() throws AccountNotActiveException{
         if (this.status != AccountStatus.ACTIVE) {
             throw new AccountNotActiveException("Account " + this.id + " is not ACTIVE");
         }
