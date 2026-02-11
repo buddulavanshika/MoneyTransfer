@@ -8,6 +8,7 @@ com\mts\application\entities\Account.class
 com\mts\application\repository\AccountRepository.class
 com\mts\MoneyTransferApplication.class
 com\mts\application\service\TransferService$Direction.class
+com\mts\application\security\AuthController$ErrorResponse.class
 com\mts\domain\model\TransactionLog.class
 com\mts\application\security\AuthController.class
 com\mts\application\mapper\TransactionMapper.class
@@ -24,6 +25,7 @@ com\mts\application\service\AccountServiceImpl.class
 com\mts\domain\dto\AccountResponse.class
 com\mts\application\security\payload\AuthDtos.class
 com\mts\application\service\AccountService.class
+com\mts\application\controller\TestController.class
 com\mts\domain\dto\ErrorResponse.class
 com\mts\domain\util\Money.class
 com\mts\application\security\payload\AuthDtos$LoginRequest.class
