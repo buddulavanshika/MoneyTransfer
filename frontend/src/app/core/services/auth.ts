@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
@@ -11,6 +12,8 @@ import { LoginRequest, LoginResponse, AuthUser } from '../models/auth.model';
 export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'auth_user';
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
   
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(this.getUserFromStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -27,8 +30,10 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    if (this.isBrowser) {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    }
     this.currentUserSubject.next(null);
   }
 
@@ -56,6 +61,9 @@ export class AuthService {
   }
 
   getToken(): string | null {
+    if (!this.isBrowser) {
+      return null;
+    }
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
@@ -69,19 +77,25 @@ export class AuthService {
   }
 
   private setSession(authResult: LoginResponse): void {
-    localStorage.setItem(this.TOKEN_KEY, authResult.token);
-    
     const user: AuthUser = {
       accountId: authResult.accountId,
       holderName: authResult.holderName,
       username: '' // We don't get username from response, but we can store it if needed
     };
     
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    if (this.isBrowser) {
+      localStorage.setItem(this.TOKEN_KEY, authResult.token);
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    }
+    
     this.currentUserSubject.next(user);
   }
 
   private getUserFromStorage(): AuthUser | null {
+    if (!this.isBrowser) {
+      return null;
+    }
+    
     const userStr = localStorage.getItem(this.USER_KEY);
     if (userStr) {
       try {
