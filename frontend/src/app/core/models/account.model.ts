@@ -1,0 +1,20 @@
+export interface Account {
+  id: number;
+  holderName: string;
+  balance: number;
+  status: AccountStatus;
+  lastUpdated: string;
+}
+
+export enum AccountStatus {
+  ACTIVE = 'ACTIVE',
+  LOCKED = 'LOCKED',
+  CLOSED = 'CLOSED'
+}
+
+export interface AccountResponse {
+  id: number;
+  holderName: string;
+  balance: number;
+  status: AccountStatus;
+}
