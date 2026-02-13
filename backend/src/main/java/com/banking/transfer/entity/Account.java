@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 public class Account {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id", nullable = false, unique = true)
+    private String id;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -42,6 +42,13 @@ public class Account {
 
     @LastModifiedDate
     private LocalDateTime lastUpdated;
+
+    @PrePersist
+    private void prePersist() {
+        if (this.id == null) {
+            this.id = "ACC-" + System.currentTimeMillis();
+        }
+    }
 
     // Business methods
     public void debit(BigDecimal amount) {

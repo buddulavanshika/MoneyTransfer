@@ -50,7 +50,7 @@ export class Transfer implements OnInit {
     private router: Router
   ) {
     this.transferForm = this.fb.group({
-      toAccountId: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
+      toAccountId: ['', [Validators.required, Validators.pattern(/^ACC-\d+$/)]],
       amount: ['', [Validators.required, Validators.min(0.01)]]
     });
   }
@@ -85,7 +85,7 @@ export class Transfer implements OnInit {
       return;
     }
 
-    const toAccountId = parseInt(this.transferForm.value.toAccountId);
+    const toAccountId: string = this.transferForm.value.toAccountId;
     
     // Validate not transferring to self
     if (toAccountId === this.currentAccount.id) {

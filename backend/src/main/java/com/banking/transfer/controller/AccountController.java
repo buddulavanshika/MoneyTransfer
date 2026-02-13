@@ -34,19 +34,19 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponse> getAccount(@PathVariable Long id) {
+    public ResponseEntity<AccountResponse> getAccount(@PathVariable String id) {
         AccountResponse response = accountService.getAccountResponse(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/balance")
-    public ResponseEntity<AccountResponse> getBalance(@PathVariable Long id) {
+    public ResponseEntity<AccountResponse> getBalance(@PathVariable String id) {
         AccountResponse response = accountService.getAccountResponse(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable Long id) {
+    public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable String id) {
         List<TransactionResponse> transactions = accountService.getTransactions(id);
         return ResponseEntity.ok(transactions);
     }

@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @Builder
 public class AccountResponse {
 
-    private Long id;
+    private String id;
     private String username;
     private String holderName;
     private BigDecimal balance;

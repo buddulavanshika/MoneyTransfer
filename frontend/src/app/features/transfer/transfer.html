@@ -59,7 +59,7 @@
                         <mat-form-field appearance="outline">
                             <mat-label>To Account ID</mat-label>
                             <input matInput formControlName="toAccountId" placeholder="Enter destination account ID"
-                                type="number" (input)="clearMessages()">
+                                type="text" (input)="clearMessages()">
                             <mat-icon matPrefix>person</mat-icon>
                             @if (transferForm.get('toAccountId')?.hasError('required') &&
                             transferForm.get('toAccountId')?.touched) {

@@ -77,19 +77,19 @@ public class AccountService {
     }
 
     @Transactional(readOnly = true)
-    public Account getAccount(Long accountId) {
+    public Account getAccount(String accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException("Account with ID " + accountId + " not found"));
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse getAccountResponse(Long accountId) {
+    public AccountResponse getAccountResponse(String accountId) {
         Account account = getAccount(accountId);
         return toAccountResponse(account);
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactions(Long accountId) {
+    public List<TransactionResponse> getTransactions(String accountId) {
         // Verify account exists
         getAccount(accountId);
 

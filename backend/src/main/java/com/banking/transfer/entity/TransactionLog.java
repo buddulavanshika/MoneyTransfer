@@ -19,10 +19,10 @@ public class TransactionLog {
     private String id;
 
     @Column(nullable = false)
-    private Long fromAccountId;
+    private String fromAccountId;
 
     @Column(nullable = false)
-    private Long toAccountId;
+    private String toAccountId;
 
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal amount;

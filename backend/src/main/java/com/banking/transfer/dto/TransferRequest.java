@@ -17,10 +17,10 @@ import java.math.BigDecimal;
 public class TransferRequest {
 
     @NotNull(message = "From account ID is required")
-    private Long fromAccountId;
+    private String fromAccountId;
 
     @NotNull(message = "To account ID is required")
-    private Long toAccountId;
+    private String toAccountId;
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")

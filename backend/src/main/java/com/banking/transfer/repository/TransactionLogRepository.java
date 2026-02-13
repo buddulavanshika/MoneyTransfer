@@ -14,5 +14,5 @@ public interface TransactionLogRepository extends JpaRepository<TransactionLog, 
     Optional<TransactionLog> findByIdempotencyKey(String idempotencyKey);
 
     @Query("SELECT t FROM TransactionLog t WHERE t.fromAccountId = ?1 OR t.toAccountId = ?1 ORDER BY t.createdOn DESC")
-    List<TransactionLog> findByAccountId(Long accountId);
+    List<TransactionLog> findByAccountId(String accountId);
 }

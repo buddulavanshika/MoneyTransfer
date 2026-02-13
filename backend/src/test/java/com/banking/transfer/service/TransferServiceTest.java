@@ -43,7 +43,7 @@ class TransferServiceTest {
     @BeforeEach
     void setUp() {
         fromAccount = Account.builder()
-                .id(1L)
+                .id("ACC-1")
                 .username("alice")
                 .password("encoded_password")
                 .holderName("Alice Johnson")
@@ -53,7 +53,7 @@ class TransferServiceTest {
                 .build();
 
         toAccount = Account.builder()
-                .id(2L)
+                .id("ACC-2")
                 .username("bob")
                 .password("encoded_password")
                 .holderName("Bob Smith")
@@ -63,8 +63,8 @@ class TransferServiceTest {
                 .build();
 
         transferRequest = TransferRequest.builder()
-                .fromAccountId(1L)
-                .toAccountId(2L)
+                .fromAccountId("ACC-1")
+                .toAccountId("ACC-2")
                 .amount(new BigDecimal("500.00"))
                 .idempotencyKey("txn-001")
                 .build();
@@ -74,8 +74,8 @@ class TransferServiceTest {
     void transfer_Success() {
         // Arrange
         when(transactionLogRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
+        when(accountRepository.findById("ACC-1")).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findById("ACC-2")).thenReturn(Optional.of(toAccount));
         when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(transactionLogRepository.save(any(TransactionLog.class))).thenAnswer(invocation -> {
             TransactionLog log = invocation.getArgument(0);
@@ -96,7 +96,7 @@ class TransferServiceTest {
         assertEquals(new BigDecimal("3500.00"), toAccount.getBalance());
 
         verify(transactionLogRepository, times(1)).findByIdempotencyKey("txn-001");
-        verify(accountRepository, times(2)).findById(anyLong());
+        verify(accountRepository, times(2)).findById(anyString());
         verify(accountRepository, times(2)).save(any(Account.class));
         verify(transactionLogRepository, times(1)).save(any(TransactionLog.class));
     }
@@ -107,8 +107,8 @@ class TransferServiceTest {
         transferRequest.setAmount(new BigDecimal("10000.00")); // More than balance
 
         when(transactionLogRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
+        when(accountRepository.findById("ACC-1")).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findById("ACC-2")).thenReturn(Optional.of(toAccount));
 
         // Act & Assert
         InsufficientBalanceException exception = assertThrows(
@@ -135,14 +135,14 @@ class TransferServiceTest {
         assertTrue(exception.getMessage().contains("Duplicate"));
 
         verify(transactionLogRepository, times(1)).findByIdempotencyKey("txn-001");
-        verify(accountRepository, never()).findById(anyLong());
+        verify(accountRepository, never()).findById(anyString());
         verify(accountRepository, never()).save(any(Account.class));
     }
 
     @Test
     void transfer_SameAccount_ThrowsException() {
         // Arrange
-        transferRequest.setToAccountId(1L); // Same as fromAccountId
+        transferRequest.setToAccountId("ACC-1"); // Same as fromAccountId
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
@@ -159,7 +159,7 @@ class TransferServiceTest {
     void transfer_FromAccountNotFound_ThrowsException() {
         // Arrange
         when(transactionLogRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(accountRepository.findById(1L)).thenReturn(Optional.empty());
+        when(accountRepository.findById("ACC-1")).thenReturn(Optional.empty());
 
         // Act & Assert
         AccountNotFoundException exception = assertThrows(
@@ -168,7 +168,7 @@ class TransferServiceTest {
 
         assertTrue(exception.getMessage().contains("not found"));
 
-        verify(accountRepository, times(1)).findById(1L);
+        verify(accountRepository, times(1)).findById("ACC-1");
         verify(accountRepository, never()).save(any(Account.class));
     }
 }

@@ -52,7 +52,7 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  getAccountId(): number | null {
+  getAccountId(): string | null {
     const user = this.getCurrentUser();
     return user ? user.accountId : null;
   }

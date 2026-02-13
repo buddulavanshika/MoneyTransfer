@@ -16,15 +16,15 @@ export class AccountService {
     return this.http.post<AccountResponse>(`${environment.apiUrl}/accounts`, request);
   }
 
-  getAccount(accountId: number): Observable<AccountResponse> {
+  getAccount(accountId: string): Observable<AccountResponse> {
     return this.http.get<AccountResponse>(`${environment.apiUrl}/accounts/${accountId}`);
   }
 
-  getBalance(accountId: number): Observable<{ balance: number }> {
+  getBalance(accountId: string): Observable<{ balance: number }> {
     return this.http.get<{ balance: number }>(`${environment.apiUrl}/accounts/${accountId}/balance`);
   }
 
-  getTransactions(accountId: number): Observable<TransactionLogResponse[]> {
+  getTransactions(accountId: string): Observable<TransactionLogResponse[]> {
     return this.http.get<TransactionLogResponse[]>(`${environment.apiUrl}/accounts/${accountId}/transactions`);
   }
 }

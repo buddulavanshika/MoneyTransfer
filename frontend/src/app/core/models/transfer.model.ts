@@ -1,6 +1,6 @@
 export interface TransferRequest {
-  fromAccountId: number;
-  toAccountId: number;
+  fromAccountId: string;
+  toAccountId: string;
   amount: number;
   idempotencyKey: string;
 }
@@ -9,7 +9,7 @@ export interface TransferResponse {
   transactionId: string;
   status: string;
   message: string;
-  debitedFrom: number;
-  creditedTo: number;
+  debitedFrom: string;
+  creditedTo: string;
   amount: number;
 }
