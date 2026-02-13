@@ -1,16 +1,21 @@
 spring:
   application:
-    name: restfulapi
+    name: money-transfer-system
+  profiles:
+    active: mysql
+  
+  security:
+    user:
+      name: admin
+      password: admin
 
-  datasource:
-    url: jdbc:mysql://localhost:3306/moneytransferdb?createDatabaseIfNotExist=true
-    username: root
-    password: Root123$
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
 
-  jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+logging:
+  level:
+    com.banking.transfer: DEBUG
+    org.springframework.security: DEBUG
