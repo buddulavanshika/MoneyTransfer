@@ -2,7 +2,6 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { jwtDecode } from 'jwt-decode';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, AuthUser } from '../models/auth.model';
 
@@ -21,10 +20,10 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials)
+    return this.http.post<LoginResponse>(`${environment.apiUrl}/accounts/login`, credentials)
       .pipe(
         tap(response => {
-          this.setSession(response);
+          this.setSession(response, credentials);
         })
       );
   }
@@ -39,25 +38,7 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     const token = this.getToken();
-    if (!token) {
-      return false;
-    }
-    
-    try {
-      const decoded: any = jwtDecode(token);
-      const expirationDate = decoded.exp * 1000;
-      const now = new Date().getTime();
-      
-      if (now >= expirationDate) {
-        this.logout();
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      this.logout();
-      return false;
-    }
+    return !!token;
   }
 
   getToken(): string | null {
@@ -76,15 +57,17 @@ export class AuthService {
     return user ? user.accountId : null;
   }
 
-  private setSession(authResult: LoginResponse): void {
+  private setSession(authResult: LoginResponse, credentials: LoginRequest): void {
+    const basicToken = btoa(`${credentials.username}:${credentials.password}`);
+
     const user: AuthUser = {
-      accountId: authResult.accountId,
+      accountId: authResult.id,
       holderName: authResult.holderName,
-      username: '' // We don't get username from response, but we can store it if needed
+      username: authResult.username
     };
     
     if (this.isBrowser) {
-      localStorage.setItem(this.TOKEN_KEY, authResult.token);
+      localStorage.setItem(this.TOKEN_KEY, `Basic ${basicToken}`);
       localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     }
     

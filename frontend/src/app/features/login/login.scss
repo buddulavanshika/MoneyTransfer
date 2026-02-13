@@ -73,6 +73,23 @@ mat-form-field {
   width: 100%;
 }
 
+.success-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background-color: #e8f5e9;
+  color: var(--primary-green-dark);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .error-alert {
   display: flex;
   align-items: center;
@@ -103,6 +120,23 @@ mat-form-field {
 
   mat-spinner {
     display: inline-block;
+  }
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: var(--spacing-md);
+  color: var(--gray-600);
+  font-size: 0.95rem;
+
+  a {
+    color: var(--primary-green);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 

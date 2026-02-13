@@ -40,6 +40,12 @@
             }
           </mat-form-field>
 
+          @if (successMessage) {
+            <div class="success-alert">
+              <mat-icon>check_circle_outline</mat-icon>
+              <span>{{ successMessage }}</span>
+            </div>
+          }
           @if (errorMessage) {
             <div class="error-alert">
               <mat-icon>error_outline</mat-icon>
@@ -57,12 +63,16 @@
               <span>Login</span>
             }
           </button>
+
+          <p class="signup-link">
+            Don't have an account? <a routerLink="/register">Sign up</a>
+          </p>
         </form>
       </mat-card-content>
     </mat-card>
 
     <div class="login-footer">
-      <p>&copy; 2024 Money Transfer System. All rights reserved.</p>
+      <p>&copy; 2026 Money Transfer System. All rights reserved.</p>
     </div>
   </div>
 </div>

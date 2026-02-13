@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AccountResponse } from '../models/account.model';
+import { AccountResponse, CreateAccountRequest } from '../models/account.model';
 import { TransactionLogResponse } from '../models/transaction.model';
 
 @Injectable({
@@ -11,6 +11,10 @@ import { TransactionLogResponse } from '../models/transaction.model';
 export class AccountService {
 
   constructor(private http: HttpClient) {}
+
+  createAccount(request: CreateAccountRequest): Observable<AccountResponse> {
+    return this.http.post<AccountResponse>(`${environment.apiUrl}/accounts`, request);
+  }
 
   getAccount(accountId: number): Observable<AccountResponse> {
     return this.http.get<AccountResponse>(`${environment.apiUrl}/accounts/${accountId}`);

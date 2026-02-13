@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -16,6 +16,7 @@ import { AuthService } from '../../core/services/auth';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -30,6 +31,7 @@ export class Login {
   loginForm: FormGroup;
   loading = false;
   errorMessage = '';
+  successMessage = '';
   hidePassword = true;
 
   constructor(
@@ -38,6 +40,10 @@ export class Login {
     private router: Router,
     private route: ActivatedRoute
   ) {
+    const registered = this.route.snapshot.queryParams['registered'] === 'true';
+    if (registered) {
+      this.successMessage = 'Account created. Please sign in.';
+    }
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(4)]]

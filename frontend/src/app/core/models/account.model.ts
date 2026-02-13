@@ -18,3 +18,9 @@ export interface AccountResponse {
   balance: number;
   status: AccountStatus;
 }
+
+export interface CreateAccountRequest {
+  username: string;
+  password: string;
+  holderName: string;
+}
