@@ -1,0 +1,117 @@
+<div class="login-container">
+  <div class="login-card">
+    <mat-card>
+      <mat-card-header>
+        <div class="login-header">
+          <div class="logo">
+            <mat-icon class="logo-icon">account_balance</mat-icon>
+          </div>
+          <h1>Money Transfer System</h1>
+          <p class="subtitle">Secure. Reliable. Fast.</p>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          
+          <!-- Username -->
+          <mat-form-field appearance="outline">
+            <mat-label>Username</mat-label>
+            <input
+              matInput
+              formControlName="username"
+              placeholder="Enter your username"
+              autocomplete="username"
+              aria-describedby="username-hint"
+            />
+            <mat-icon matPrefix>person</mat-icon>
+
+            <mat-hint id="username-hint">
+              At least 5 letters or numbers (e.g., <b>ab1c2</b>)
+            </mat-hint>
+
+            @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
+              <mat-error>Username is required</mat-error>
+            }
+            @if (loginForm.get('username')?.hasError('pattern')) {
+              <mat-error>Username must be at least 5 characters, letters & numbers only</mat-error>
+            }
+          </mat-form-field>
+
+
+          <!-- Password -->
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input
+              matInput
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              aria-describedby="password-hint"
+            />
+            <mat-icon matPrefix>lock</mat-icon>
+            <button 
+              mat-icon-button 
+              matSuffix 
+              type="button" 
+              (click)="togglePasswordVisibility()" 
+              [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
+            >
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <!-- Add this below your login button block -->
+            
+
+            <mat-hint id="password-hint">
+              At least 8 chars, incl. <b>1 uppercase</b>, <b>1 number</b>, <b>1 special</b>, no spaces
+            </mat-hint>
+
+            @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+              <mat-error>Password is required</mat-error>
+            }
+            @if (loginForm.get('password')?.hasError('pattern')) {
+              <mat-error>
+                Password must be at least 8 characters with at least 1 uppercase letter, 
+                1 number, and 1 special character (no spaces)
+              </mat-error>
+            }
+          </mat-form-field>
+
+
+          <!-- Server Error -->
+          @if (errorMessage) {
+            <div class="error-alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          <!-- Submit Button -->
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="loginForm.invalid || loading"
+            class="login-button"
+          >
+            @if (loading) {
+              <mat-spinner diameter="20"></mat-spinner>
+              <span>Logging in...</span>
+            } @else {
+              <span>Login</span>
+            }
+          </button>
+<p class="signup-link">
+              New user? <a routerLink="/register">Create an account</a>
+            </p>
+        </form>
+      </mat-card-content>
+
+    </mat-card>
+
+    <div class="login-footer">
+      <p>&copy; 2026 Money Transfer System. All rights reserved.</p>
+    </div>
+  </div>
+</div>
