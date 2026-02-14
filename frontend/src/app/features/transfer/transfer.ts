@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../../core/services/auth';
 import { AccountService } from '../../core/services/account';
 import { TransferService } from '../../core/services/transfer';
@@ -35,12 +35,14 @@ import { AccountResponse } from '../../core/models/account.model';
   styleUrl: './transfer.scss'
 })
 export class Transfer implements OnInit {
+
   transferForm: FormGroup;
   currentAccount: AccountResponse | null = null;
   loading = false;
   submitting = false;
   successMessage = '';
   errorMessage = '';
+  formSubmitted = false; // 🔥 important
 
   constructor(
     private fb: FormBuilder,
@@ -49,8 +51,9 @@ export class Transfer implements OnInit {
     private transferService: TransferService,
     private router: Router
   ) {
+
     this.transferForm = this.fb.group({
-      toAccountId: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
+      toAccountId: ['', [Validators.required, Validators.pattern(/^ACC-\d+$/)]],
       amount: ['', [Validators.required, Validators.min(0.01)]]
     });
   }
@@ -60,14 +63,16 @@ export class Transfer implements OnInit {
   }
 
   loadCurrentAccount(): void {
+
     const accountId = this.authService.getAccountId();
-    
+
     if (!accountId) {
       this.router.navigate(['/login']);
       return;
     }
 
     this.loading = true;
+
     this.accountService.getAccount(accountId).subscribe({
       next: (data) => {
         this.currentAccount = data;
@@ -81,27 +86,38 @@ export class Transfer implements OnInit {
   }
 
   onSubmit(): void {
+
+    this.formSubmitted = true; // 🔥 trigger validation
+    this.clearMessages();
+
+    // show validation instantly
+    this.transferForm.markAllAsTouched();
+
+    const amountControl = this.transferForm.get('amount');
+
+    // 🚨 BANK STYLE ALERT
+    if (!amountControl?.value) {
+      this.errorMessage = '⚠️ Please enter the transfer amount';
+      return;
+    }
+
     if (this.transferForm.invalid || !this.currentAccount) {
       return;
     }
 
-    const toAccountId = parseInt(this.transferForm.value.toAccountId);
-    
-    // Validate not transferring to self
+    const toAccountId: string = this.transferForm.value.toAccountId;
+
     if (toAccountId === this.currentAccount.id) {
       this.errorMessage = 'Cannot transfer to the same account';
       return;
     }
 
-    // Validate sufficient balance
     if (this.transferForm.value.amount > this.currentAccount.balance) {
       this.errorMessage = 'Insufficient balance for this transfer';
       return;
     }
 
     this.submitting = true;
-    this.errorMessage = '';
-    this.successMessage = '';
 
     const transferRequest: TransferRequest = {
       fromAccountId: this.currentAccount.id,
@@ -112,19 +128,25 @@ export class Transfer implements OnInit {
 
     this.transferService.transfer(transferRequest).subscribe({
       next: (response) => {
+
         this.submitting = false;
-        this.successMessage = `Transfer successful! ${this.formatCurrency(response.amount)} sent to Account ${response.creditedTo}`;
+
+        this.successMessage =
+          `Transfer successful! ${this.formatCurrency(response.amount)} sent to Account ${response.creditedTo}`;
+
         this.transferForm.reset();
-        this.loadCurrentAccount(); // Refresh balance
-        
-        // Navigate to history after 2 seconds
+        this.formSubmitted = false;
+
+        this.loadCurrentAccount();
+
         setTimeout(() => {
           this.router.navigate(['/history']);
         }, 2000);
       },
       error: (error) => {
         this.submitting = false;
-        this.errorMessage = error.error?.message || 'Transfer failed. Please try again.';
+        this.errorMessage =
+          error.error?.message || 'Transfer failed. Please try again.';
       }
     });
   }

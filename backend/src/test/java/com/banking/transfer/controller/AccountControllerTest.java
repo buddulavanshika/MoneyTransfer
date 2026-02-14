@@ -46,7 +46,7 @@ class AccountControllerTest {
                 .build();
 
         AccountResponse response = AccountResponse.builder()
-                .id(1L)
+                .id("ACC-1")
                 .username("testuser")
                 .holderName("Test User")
                 .balance(new BigDecimal("1000.00"))
@@ -60,7 +60,7 @@ class AccountControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("ACC-1"))
                 .andExpect(jsonPath("$.username").value("testuser"))
                 .andExpect(jsonPath("$.holderName").value("Test User"))
                 .andExpect(jsonPath("$.balance").value(1000.00))
@@ -76,7 +76,7 @@ class AccountControllerTest {
                 .build();
 
         AccountResponse response = AccountResponse.builder()
-                .id(1L)
+                .id("ACC-1")
                 .username("testuser")
                 .holderName("Test User")
                 .balance(new BigDecimal("1000.00"))
@@ -90,7 +90,7 @@ class AccountControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("ACC-1"))
                 .andExpect(jsonPath("$.username").value("testuser"));
     }
 
@@ -98,20 +98,20 @@ class AccountControllerTest {
     void getAccount_Success() throws Exception {
         // Arrange
         AccountResponse response = AccountResponse.builder()
-                .id(1L)
+                .id("ACC-1")
                 .username("testuser")
                 .holderName("Test User")
                 .balance(new BigDecimal("1000.00"))
                 .status(AccountStatus.ACTIVE)
                 .build();
 
-        when(accountService.getAccountResponse(1L)).thenReturn(response);
+        when(accountService.getAccountResponse("ACC-1")).thenReturn(response);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/accounts/1")
+        mockMvc.perform(get("/api/v1/accounts/ACC-1")
                 .header("Authorization", "Basic dGVzdHVzZXI6cGFzc3dvcmQxMjM="))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("ACC-1"))
                 .andExpect(jsonPath("$.username").value("testuser"))
                 .andExpect(jsonPath("$.balance").value(1000.00));
     }

@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.banking.transfer.controller.AccountControllerTest
--------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 66.72 s -- in com.banking.transfer.controller.AccountControllerTest

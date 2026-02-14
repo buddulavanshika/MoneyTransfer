@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class AccountService {
+
+    private static final BigDecimal DEFAULT_INITIAL_BALANCE = BigDecimal.valueOf(1000);
 
     private final AccountRepository accountRepository;
     private final TransactionLogRepository transactionLogRepository;
@@ -39,12 +42,16 @@ public class AccountService {
             throw new DuplicateUsernameException("Username '" + request.getUsername() + "' is already taken");
         }
 
+        BigDecimal balance = request.getInitialBalance() != null
+                ? request.getInitialBalance()
+                : DEFAULT_INITIAL_BALANCE;
+
         // Create new account
         Account account = Account.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .holderName(request.getHolderName())
-                .balance(request.getInitialBalance())
+                .balance(balance)
                 .status(AccountStatus.ACTIVE)
                 .build();
 
@@ -70,19 +77,19 @@ public class AccountService {
     }
 
     @Transactional(readOnly = true)
-    public Account getAccount(Long accountId) {
+    public Account getAccount(String accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException("Account with ID " + accountId + " not found"));
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse getAccountResponse(Long accountId) {
+    public AccountResponse getAccountResponse(String accountId) {
         Account account = getAccount(accountId);
         return toAccountResponse(account);
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactions(Long accountId) {
+    public List<TransactionResponse> getTransactions(String accountId) {
         // Verify account exists
         getAccount(accountId);
 

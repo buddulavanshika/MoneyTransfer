@@ -1,7 +1,7 @@
 export interface Transaction {
   id: string;
-  fromAccountId: number;
-  toAccountId: number;
+  fromAccountId: string;
+  toAccountId: string;
   amount: number;
   status: TransactionStatus;
   failureReason?: string;
@@ -16,8 +16,8 @@ export enum TransactionStatus {
 
 export interface TransactionLogResponse {
   id: string;
-  fromAccountId: number;
-  toAccountId: number;
+  fromAccountId: string;
+  toAccountId: string;
   amount: number;
   status: TransactionStatus;
   failureReason?: string;

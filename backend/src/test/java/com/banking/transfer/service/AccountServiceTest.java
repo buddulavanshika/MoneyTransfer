@@ -24,6 +24,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,7 +55,7 @@ class AccountServiceTest {
                 .build();
 
         testAccount = Account.builder()
-                .id(1L)
+                .id("ACC-1")
                 .username("testuser")
                 .password("$2a$10$encoded_password")
                 .holderName("Test User")
@@ -84,6 +85,39 @@ class AccountServiceTest {
         verify(accountRepository, times(1)).existsByUsername("testuser");
         verify(passwordEncoder, times(1)).encode("password123");
         verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void createAccount_NullInitialBalance_UsesDefault() {
+        // Arrange: request without initialBalance (e.g. from frontend registration)
+        CreateAccountRequest requestWithoutBalance = CreateAccountRequest.builder()
+                .username("newuser")
+                .password("password123")
+                .holderName("New User")
+                .initialBalance(null)
+                .build();
+
+        Account accountWithDefaultBalance = Account.builder()
+                .id("ACC-2")
+                .username("newuser")
+                .password("$2a$10$encoded_password")
+                .holderName("New User")
+                .balance(new BigDecimal("1000.00"))
+                .status(AccountStatus.ACTIVE)
+                .version(0)
+                .build();
+
+        when(accountRepository.existsByUsername(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$encoded_password");
+        when(accountRepository.save(any(Account.class))).thenReturn(accountWithDefaultBalance);
+
+        // Act
+        AccountResponse response = accountService.createAccount(requestWithoutBalance);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(new BigDecimal("1000.00"), response.getBalance());
+        verify(accountRepository).save(argThat(account -> account.getBalance().compareTo(new BigDecimal("1000")) == 0));
     }
 
     @Test
@@ -118,7 +152,7 @@ class AccountServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals("testuser", response.getUsername());
-        assertEquals(1L, response.getId());
+        assertEquals("ACC-1", response.getId());
 
         verify(accountRepository, times(1)).findByUsername("testuser");
         verify(passwordEncoder, times(1)).matches("password123", "$2a$10$encoded_password");
@@ -168,31 +202,31 @@ class AccountServiceTest {
     @Test
     void getAccountResponse_Success() {
         // Arrange
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+        when(accountRepository.findById("ACC-1")).thenReturn(Optional.of(testAccount));
 
         // Act
-        AccountResponse response = accountService.getAccountResponse(1L);
+        AccountResponse response = accountService.getAccountResponse("ACC-1");
 
         // Assert
         assertNotNull(response);
-        assertEquals(1L, response.getId());
+        assertEquals("ACC-1", response.getId());
         assertEquals("testuser", response.getUsername());
         assertEquals("Test User", response.getHolderName());
         assertEquals(new BigDecimal("1000.00"), response.getBalance());
 
-        verify(accountRepository, times(1)).findById(1L);
+        verify(accountRepository, times(1)).findById("ACC-1");
     }
 
     @Test
     void getAccountResponse_AccountNotFound_ThrowsException() {
         // Arrange
-        when(accountRepository.findById(999L)).thenReturn(Optional.empty());
+        when(accountRepository.findById("ACC-999")).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(
                 AccountNotFoundException.class,
-                () -> accountService.getAccountResponse(999L));
+                () -> accountService.getAccountResponse("ACC-999"));
 
-        verify(accountRepository, times(1)).findById(999L);
+        verify(accountRepository, times(1)).findById("ACC-999");
     }
 }

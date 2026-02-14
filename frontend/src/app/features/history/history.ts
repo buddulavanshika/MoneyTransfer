@@ -37,7 +37,7 @@ export class History implements OnInit {
   displayedColumns: string[] = ['date', 'type', 'account', 'amount', 'status'];
   loading = true;
   errorMessage = '';
-  currentAccountId: number | null = null;
+  currentAccountId: string | null = null;
 
   constructor(
     private authService: AuthService,
@@ -101,9 +101,9 @@ export class History implements OnInit {
     }).format(amount);
   }
 
-  getOtherAccountId(transaction: TransactionDisplay): number {
-    return transaction.type === 'DEBIT' 
-      ? transaction.toAccountId 
+  getOtherAccountId(transaction: TransactionDisplay): string {
+    return transaction.type === 'DEBIT'
+      ? transaction.toAccountId
       : transaction.fromAccountId;
   }
 
