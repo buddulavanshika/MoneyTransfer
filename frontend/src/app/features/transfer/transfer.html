@@ -1,24 +1,29 @@
 <app-navbar></app-navbar>
 
 <div class="transfer-container">
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <mat-spinner diameter="50"></mat-spinner>
-    <p>Loading account information...</p>
-  </div>
 
-  <!-- Account Information and Transfer Form -->
-  <div *ngIf="!loading && currentAccount" class="transfer-content">
-    <div class="transfer-header">
-      <h1>Transfer Money</h1>
-      <p>Send money securely to another account</p>
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading account information...</p>
     </div>
+  }
 
-    <div class="transfer-layout">
-      <!-- Account Info Card -->
-      <mat-card class="account-info-card">
-        <h3>Your Account</h3>
-        <div class="account-details">
+  @else if (currentAccount) {
+
+    <div class="transfer-content">
+
+      <div class="transfer-header">
+        <h1>Transfer Money</h1>
+        <p>Send money securely to another account</p>
+      </div>
+
+      <div class="transfer-layout">
+
+        <!-- ACCOUNT INFO -->
+        <mat-card class="account-info-card">
+          <h3>Your Account</h3>
+
           <div class="detail-row">
             <mat-icon>account_circle</mat-icon>
             <div>
@@ -39,145 +44,110 @@
             <mat-icon>account_balance_wallet</mat-icon>
             <div>
               <p class="detail-label">Available Balance</p>
-              <p class="detail-value balance">{{ formatCurrency(currentAccount.balance) }}</p>
+              <p class="detail-value balance">
+                {{ formatCurrency(currentAccount.balance) }}
+              </p>
             </div>
           </div>
-        </div>
-      </mat-card>
+        </mat-card>
 
-      <!-- Transfer Form Card -->
-      <mat-card class="transfer-form-card">
-        <h3>Transfer Details</h3>
+        <!-- TRANSFER FORM -->
+        <mat-card class="transfer-form-card">
+          <h3>Transfer Details</h3>
 
-        <form [formGroup]="transferForm" (ngSubmit)="onSubmit()">
-          <!-- From Account (readonly) -->
-          <div class="form-field-wrapper">
-            <mat-form-field appearance="outline">
-              <mat-label>From Account</mat-label>
-              <input
-                matInput
-                [value]="currentAccount.id + ' - ' + currentAccount.holderName"
-                readonly
-              />
-              <mat-icon matPrefix>account_balance</mat-icon>
-            </mat-form-field>
-          </div>
+          <form [formGroup]="transferForm" (ngSubmit)="onSubmit()">
 
-          <!-- To Account ID -->
-          <div class="form-field-wrapper">
+            <!-- TO ACCOUNT -->
             <mat-form-field appearance="outline">
               <mat-label>To Account ID</mat-label>
-              <input
-                matInput
-                formControlName="toAccountId"
-                placeholder="Enter destination account ID"
-                type="text"
-                inputmode="numeric"
-                (input)="clearMessages()"
-              />
+
+              <input matInput
+                     formControlName="toAccountId"
+                     placeholder="Enter destination account ID"
+                     (input)="clearMessages()">
+
               <mat-icon matPrefix>person</mat-icon>
 
-              <!-- Error Messages for To Account ID -->
-              <mat-error *ngIf="transferForm.get('toAccountId')?.hasError('required')">
-                Destination account is required
-              </mat-error>
-              <mat-error *ngIf="transferForm.get('toAccountId')?.hasError('pattern')">
-                Please enter a valid account ID
-              </mat-error>
-            </mat-form-field>
-          </div>
+              @if (transferForm.get('toAccountId')?.hasError('required') &&
+                   (transferForm.get('toAccountId')?.touched || formSubmitted)) {
+                <mat-error>Destination account is required</mat-error>
+              }
 
-          <!-- Amount -->
-          <div class="form-field-wrapper">
+              @if (transferForm.get('toAccountId')?.hasError('pattern')) {
+                <mat-error>Please enter a valid account ID</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- AMOUNT -->
             <mat-form-field appearance="outline">
               <mat-label>Amount</mat-label>
-              <input
-                matInput
-                formControlName="amount"
-                placeholder="0.00"
-                type="number"
-                step="0.01"
-                (input)="clearMessages()"
-              />
+
+              <input matInput
+                     formControlName="amount"
+                     placeholder="0.00"
+                     type="number"
+                     step="0.01"
+                     (input)="clearMessages()">
+
               <span matPrefix>$&nbsp;</span>
 
-              <!-- Error Messages for Amount -->
-              <mat-error *ngIf="transferForm.get('amount')?.hasError('required')">
-                Amount is required
-              </mat-error>
-              <mat-error *ngIf="transferForm.get('amount')?.hasError('min')">
-                Amount must be greater than 0
-              </mat-error>
+              @if (transferForm.get('amount')?.hasError('required') &&
+                   (transferForm.get('amount')?.touched || formSubmitted)) {
+                <mat-error>Please enter the transfer amount</mat-error>
+              }
+
+              @if (transferForm.get('amount')?.hasError('min')) {
+                <mat-error>Amount must be greater than 0</mat-error>
+              }
             </mat-form-field>
-          </div>
 
-          <!-- Success Message -->
-          <div *ngIf="successMessage" class="success-alert">
-            <mat-icon>check_circle</mat-icon>
-            <span>{{ successMessage }}</span>
-          </div>
+            @if (successMessage) {
+              <div class="success-alert">
+                <mat-icon>check_circle</mat-icon>
+                <span>{{ successMessage }}</span>
+              </div>
+            }
 
-          <!-- Error Message -->
-          <div *ngIf="errorMessage" class="error-alert">
-            <mat-icon>error_outline</mat-icon>
-            <span>{{ errorMessage }}</span>
-          </div>
+            @if (errorMessage) {
+              <div class="error-alert">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ errorMessage }}</span>
+              </div>
+            }
 
-          <!-- Form Actions -->
-          <div class="form-actions">
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="cancel()"
-              [disabled]="submitting"
-            >
-              <mat-icon>cancel</mat-icon>
-              Cancel
-            </button>
+            <div class="form-actions">
 
-            <button
-              mat-raised-button
-              color="primary"
-              type="submit"
-              [disabled]="transferForm.invalid || submitting"
-            >
-              <ng-container *ngIf="submitting; else transferButton">
-                <mat-spinner diameter="20"></mat-spinner>
-                <span>Processing...</span>
-              </ng-container>
-              <ng-template #transferButton>
-                <mat-icon>send</mat-icon>
-                <span>Transfer Money</span>
-              </ng-template>
-            </button>
-          </div>
-        </form>
-      </mat-card>
-    </div>
+              <button mat-stroked-button type="button"
+                      (click)="cancel()"
+                      [disabled]="submitting">
+                <mat-icon>cancel</mat-icon>
+                Cancel
+              </button>
 
-    <!-- Info Section -->
-    <mat-card class="info-card">
-      <div class="info-header">
-        <mat-icon>info</mat-icon>
-        <h4>Transfer Information</h4>
+              <button mat-raised-button color="primary"
+                      type="submit"
+                      [disabled]="submitting">
+
+                @if (submitting) {
+                  <ng-container>
+                    <mat-spinner diameter="20"></mat-spinner>
+                    <span>Processing...</span>
+                  </ng-container>
+                } @else {
+                  <ng-container>
+                    <mat-icon>send</mat-icon>
+                    <span>Transfer Money</span>
+                  </ng-container>
+                }
+
+              </button>
+
+            </div>
+
+          </form>
+        </mat-card>
+
       </div>
-      <ul class="info-list">
-        <li>Transfers are processed instantly</li>
-        <li>Ensure the destination account ID is correct before confirming</li>
-        <li>Your available balance will be updated immediately after the transfer</li>
-        <li>All transactions are secure and encrypted</li>
-      </ul>
-    </mat-card>
-  </div>
-
-  <!-- Empty State if no current account -->
-  <div *ngIf="!loading && !currentAccount" class="empty-state">
-    <mat-icon>account_balance</mat-icon>
-    <h2>No account loaded</h2>
-    <p>Please try reloading the page or navigate back to Accounts.</p>
-    <button mat-stroked-button color="primary" (click)="reload()">
-      <mat-icon>refresh</mat-icon>
-      Reload
-    </button>
-  </div>
+    </div>
+  }
 </div>

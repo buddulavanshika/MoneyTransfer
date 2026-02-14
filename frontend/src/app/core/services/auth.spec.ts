@@ -1,13 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { PLATFORM_ID } from '@angular/core';
 
-import { Auth } from './auth';
+import { AuthService } from './auth';
 
-describe('Auth', () => {
-  let service: Auth;
+describe('AuthService', () => {
+  let service: AuthService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(Auth);
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        AuthService,
+        { provide: PLATFORM_ID, useValue: 'browser' }
+      ]
+    });
+    service = TestBed.inject(AuthService);
   });
 
   it('should be created', () => {

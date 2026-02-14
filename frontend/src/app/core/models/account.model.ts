@@ -1,5 +1,5 @@
 export interface Account {
-  id: number;
+  id: string;
   holderName: string;
   balance: number;
   status: AccountStatus;
@@ -13,7 +13,7 @@ export enum AccountStatus {
 }
 
 export interface AccountResponse {
-  id: number;
+  id: string;
   holderName: string;
   balance: number;
   status: AccountStatus;

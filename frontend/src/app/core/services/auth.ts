@@ -13,13 +13,19 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'auth_user';
 
-  // 🔥 realtime tab lock
-  private channel?: BroadcastChannel;
-  private readonly TAB_ID = Math.random().toString(36).slice(2);
-  private isOwner = false;
+  // 🏦 ICICI TAB LOCK KEYS
+  private readonly LOCK_KEY = 'icici_owner_tab';
+  private readonly HEARTBEAT_KEY = 'icici_owner_heartbeat';
 
+  private readonly TAB_ID = Math.random().toString(36).slice(2);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+
+  private isOwner = false;
+  private heartbeatTimer?: any;
+
+  private blockSubject = new BehaviorSubject<boolean>(false);
+  blocked$ = this.blockSubject.asObservable();
 
   private currentUserSubject =
     new BehaviorSubject<AuthUser | null>(this.getUserFromStorage());
@@ -29,54 +35,116 @@ export class AuthService {
   constructor(private http: HttpClient) {
 
     if (this.isBrowser) {
-      this.initChannel();
+
+      this.claimOwnership();
+
+      // release lock when tab closes
+      window.addEventListener('beforeunload', () => {
+
+        if (this.isOwner) {
+          localStorage.removeItem(this.LOCK_KEY);
+          localStorage.removeItem(this.HEARTBEAT_KEY);
+        }
+      });
+
+      // listen if ownership changes
+      window.addEventListener('storage', (event) => {
+
+        if (event.key === this.LOCK_KEY) {
+
+          const owner = localStorage.getItem(this.LOCK_KEY);
+
+          if (owner && owner !== this.TAB_ID) {
+            this.blockSession();
+          }
+        }
+      });
     }
   }
 
-  // 🔥 BROADCAST CHANNEL SETUP
-  private initChannel() {
-
-    this.channel = new BroadcastChannel('bank-session');
-
-    this.channel.onmessage = (event) => {
-
-      const msg = event.data;
-
-      // another tab already active
-      if (msg.type === 'CHECK_OWNER' && this.isOwner) {
-        this.channel?.postMessage({
-          type: 'OWNER_EXISTS'
-        });
-      }
-
-      // this tab should block
-      if (msg.type === 'OWNER_EXISTS' && !this.isOwner) {
-
-        alert('⚠️ Session already open in another tab');
-
-        window.location.href = '/login';
-      }
-    };
-  }
-
-  // 🔥 CLAIM OWNERSHIP (called from AppComponent)
+  // 🏦 ICICI OWNERSHIP SYSTEM
   claimOwnership() {
 
-    if (!this.channel) return;
+    if (!this.isBrowser) return;
 
-    // ask if owner exists
-    this.channel.postMessage({ type: 'CHECK_OWNER' });
+    const now = Date.now();
+    const TIMEOUT = 5000;
 
-    // wait briefly to see if someone responds
-    setTimeout(() => {
-      if (!this.isOwner) {
-        this.isOwner = true;
+    const existingOwner = localStorage.getItem(this.LOCK_KEY);
+    const heartbeat = localStorage.getItem(this.HEARTBEAT_KEY);
+
+    // 🔥 takeover if old tab dead
+    if (existingOwner && heartbeat) {
+
+      const lastBeat = Number(heartbeat);
+
+      if (now - lastBeat > TIMEOUT) {
+
+        console.log('🏦 Taking ownership — previous tab inactive');
+
+        localStorage.setItem(this.LOCK_KEY, this.TAB_ID);
+        this.becomeOwner();
+        return;
       }
-    }, 100);
+    }
+
+    // 🚫 owner alive → block
+    if (
+      existingOwner &&
+      existingOwner !== this.TAB_ID &&
+      heartbeat &&
+      now - Number(heartbeat) < TIMEOUT
+    ) {
+      this.blockSession();
+      return;
+    }
+
+    // ✅ become owner normally
+    localStorage.setItem(this.LOCK_KEY, this.TAB_ID);
+    this.becomeOwner();
+  }
+
+  private becomeOwner() {
+
+    this.isOwner = true;
+    this.blockSubject.next(false);
+
+    this.startHeartbeat();
+
+    console.log('🏦 OWNER TAB ACTIVE:', this.TAB_ID);
+  }
+
+  private blockSession() {
+
+    this.isOwner = false;
+    this.blockSubject.next(true);
+
+    document.body.classList.add('session-blocked');
+
+    console.log('🚫 Session blocked — another tab active');
+  }
+
+  private startHeartbeat() {
+
+    this.heartbeatTimer = setInterval(() => {
+
+      if (!this.isOwner) return;
+
+      localStorage.setItem(
+        this.HEARTBEAT_KEY,
+        Date.now().toString()
+      );
+
+    }, 2000);
   }
 
   // ✅ LOGIN
   login(credentials: LoginRequest): Observable<LoginResponse> {
+
+    if (!this.isOwner) {
+      this.blockSession();
+      throw new Error('Session already active in another tab');
+    }
 
     return this.http.post<LoginResponse>(
       `${environment.apiUrl}/accounts/login`,
@@ -86,15 +154,18 @@ export class AuthService {
     );
   }
 
-  // ✅ LOGOUT
   logout(): void {
 
     if (this.isBrowser) {
       localStorage.removeItem(this.TOKEN_KEY);
       localStorage.removeItem(this.USER_KEY);
+      localStorage.removeItem(this.LOCK_KEY);
+      localStorage.removeItem(this.HEARTBEAT_KEY);
     }
 
     this.isOwner = false;
+    clearInterval(this.heartbeatTimer);
+
     this.currentUserSubject.next(null);
   }
 
@@ -115,22 +186,35 @@ export class AuthService {
 
     this.currentUserSubject.next(user);
   }
+// ✅ REQUIRED FOR TRANSFER PAGE
+getAccountId(): string | null {
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  const id = this.currentUserSubject.value?.accountId;
+
+  if (id === null || id === undefined) {
+    return null;
   }
 
-  getToken(): string | null {
-    if (!this.isBrowser) return null;
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
+  return String(id);
+}
 
-  getAccountId(): number | null {
-    return this.currentUserSubject.value?.accountId ?? null;
-  }
+getCurrentUser(): AuthUser | null {
+  return this.currentUserSubject.value;
+}
 
-  getCurrentUser(): AuthUser | null {
-    return this.currentUserSubject.value;
+getToken(): string | null {
+
+  if (!this.isBrowser) return null;
+
+  return localStorage.getItem(this.TOKEN_KEY);
+}
+
+isAuthenticated(): boolean {
+  return !!this.getToken();
+}
+
+  isOwnerTab(): boolean {
+    return this.isOwner;
   }
 
   private getUserFromStorage(): AuthUser | null {

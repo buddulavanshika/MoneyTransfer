@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 public class TransactionResponse {
 
     private String id;
-    private Long fromAccountId;
-    private Long toAccountId;
+    private String fromAccountId;
+    private String toAccountId;
     private BigDecimal amount;
     private TransactionStatus status;
     private String failureReason;

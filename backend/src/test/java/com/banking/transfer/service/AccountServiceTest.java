@@ -55,7 +55,7 @@ class AccountServiceTest {
                 .build();
 
         testAccount = Account.builder()
-                .id(1L)
+                .id("ACC-1")
                 .username("testuser")
                 .password("$2a$10$encoded_password")
                 .holderName("Test User")
@@ -98,7 +98,7 @@ class AccountServiceTest {
                 .build();
 
         Account accountWithDefaultBalance = Account.builder()
-                .id(2L)
+                .id("ACC-2")
                 .username("newuser")
                 .password("$2a$10$encoded_password")
                 .holderName("New User")
@@ -152,7 +152,7 @@ class AccountServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals("testuser", response.getUsername());
-        assertEquals(1L, response.getId());
+        assertEquals("ACC-1", response.getId());
 
         verify(accountRepository, times(1)).findByUsername("testuser");
         verify(passwordEncoder, times(1)).matches("password123", "$2a$10$encoded_password");
@@ -202,31 +202,31 @@ class AccountServiceTest {
     @Test
     void getAccountResponse_Success() {
         // Arrange
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+        when(accountRepository.findById("ACC-1")).thenReturn(Optional.of(testAccount));
 
         // Act
-        AccountResponse response = accountService.getAccountResponse(1L);
+        AccountResponse response = accountService.getAccountResponse("ACC-1");
 
         // Assert
         assertNotNull(response);
-        assertEquals(1L, response.getId());
+        assertEquals("ACC-1", response.getId());
         assertEquals("testuser", response.getUsername());
         assertEquals("Test User", response.getHolderName());
         assertEquals(new BigDecimal("1000.00"), response.getBalance());
 
-        verify(accountRepository, times(1)).findById(1L);
+        verify(accountRepository, times(1)).findById("ACC-1");
     }
 
     @Test
     void getAccountResponse_AccountNotFound_ThrowsException() {
         // Arrange
-        when(accountRepository.findById(999L)).thenReturn(Optional.empty());
+        when(accountRepository.findById("ACC-999")).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(
                 AccountNotFoundException.class,
-                () -> accountService.getAccountResponse(999L));
+                () -> accountService.getAccountResponse("ACC-999"));
 
-        verify(accountRepository, times(1)).findById(999L);
+        verify(accountRepository, times(1)).findById("ACC-999");
     }
 }

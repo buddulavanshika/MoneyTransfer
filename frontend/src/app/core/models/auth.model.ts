@@ -4,7 +4,7 @@ export interface LoginRequest {
 }
 
 export interface AuthUser {
-  accountId: number;
+  accountId: string;
   holderName: string;
   username: string;
 }
@@ -12,7 +12,7 @@ export interface AuthUser {
 // The backend login endpoint returns AccountResponse,
 // which we treat as the login response shape.
 export interface LoginResponse {
-  id: number;
+  id: string;
   username: string;
   holderName: string;
   balance: number;

@@ -25,9 +25,10 @@ import { AccountService } from '../../core/services/account';
     MatProgressSpinnerModule
   ],
   templateUrl: './register.html',
-  styleUrls: ['./register.scss'] // <-- plural
+  styleUrl: './register.scss'
 })
 export class Register {
+
   registerForm: FormGroup;
   loading = false;
   errorMessage = '';
@@ -38,30 +39,35 @@ export class Register {
     private accountService: AccountService,
     private router: Router
   ) {
+
     this.registerForm = this.fb.group({
+
+      // 🔵 USERNAME REGEX
       username: [
         '',
         [
           Validators.required,
-          // At least 5 alphanumeric characters
-          Validators.pattern(/^[A-Za-z0-9]{5,}$/)
+          Validators.pattern(/^[a-zA-Z0-9]{5,}$/)
         ]
       ],
+
+      // 🔴 PASSWORD REGEX (BANKING LEVEL)
       password: [
         '',
         [
           Validators.required,
-          // At least 8 chars, with 1 uppercase, 1 digit, 1 special, no spaces
-          Validators.pattern(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,}$/)
+Validators.pattern(/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/)
+
         ]
       ],
+
       holderName: ['', [Validators.required]]
     });
   }
 
   onSubmit(): void {
+
     if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
       return;
     }
 
