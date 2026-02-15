@@ -20,11 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("java:S1192")
 public class AccountService {
 
     private static final BigDecimal DEFAULT_INITIAL_BALANCE = BigDecimal.valueOf(1000);
@@ -37,7 +37,6 @@ public class AccountService {
     public AccountResponse createAccount(CreateAccountRequest request) {
         log.info("Creating account for username: {}", request.getUsername());
 
-        // Check if username already exists
         if (accountRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateUsernameException("Username '" + request.getUsername() + "' is already taken");
         }
@@ -46,7 +45,6 @@ public class AccountService {
                 ? request.getInitialBalance()
                 : DEFAULT_INITIAL_BALANCE;
 
-        // Create new account
         Account account = Account.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -57,7 +55,6 @@ public class AccountService {
 
         Account savedAccount = accountRepository.save(account);
         log.info("Account created successfully with ID: {}", savedAccount.getId());
-
         return toAccountResponse(savedAccount);
     }
 
@@ -84,20 +81,24 @@ public class AccountService {
 
     @Transactional(readOnly = true)
     public AccountResponse getAccountResponse(String accountId) {
-        Account account = getAccount(accountId);
+        // Avoid self-invocation; fetch directly here
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Account with ID " + accountId + " not found"));
         return toAccountResponse(account);
     }
 
     @Transactional(readOnly = true)
     public List<TransactionResponse> getTransactions(String accountId) {
-        // Verify account exists
-        getAccount(accountId);
+        // Ensure account exists (no self-invocation)
+        accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Account with ID " + accountId + " not found"));
 
         List<TransactionLog> transactions = transactionLogRepository.findByAccountId(accountId);
 
         return transactions.stream()
                 .map(t -> {
-                    TransactionResponse response = TransactionResponse.builder()
+                    String type = t.getFromAccountId().equals(accountId) ? "DEBIT" : "CREDIT";
+                    return TransactionResponse.builder()
                             .id(t.getId())
                             .fromAccountId(t.getFromAccountId())
                             .toAccountId(t.getToAccountId())
@@ -105,18 +106,10 @@ public class AccountService {
                             .status(t.getStatus())
                             .failureReason(t.getFailureReason())
                             .createdOn(t.getCreatedOn())
+                            .type(type)
                             .build();
-
-                    // Determine if this is a DEBIT or CREDIT for this account
-                    if (t.getFromAccountId().equals(accountId)) {
-                        response.setType("DEBIT");
-                    } else {
-                        response.setType("CREDIT");
-                    }
-
-                    return response;
                 })
-                .collect(Collectors.toList());
+                .toList(); // Java 17: returns unmodifiable list
     }
 
     private AccountResponse toAccountResponse(Account account) {

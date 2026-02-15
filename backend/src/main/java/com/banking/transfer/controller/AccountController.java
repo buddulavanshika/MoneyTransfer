@@ -39,6 +39,7 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    @SuppressWarnings("java:S4144") // Intentionally identical: /balance is a compatibility alias returning full account
     @GetMapping("/{id}/balance")
     public ResponseEntity<AccountResponse> getBalance(@PathVariable String id) {
         AccountResponse response = accountService.getAccountResponse(id);
