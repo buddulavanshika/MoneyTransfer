@@ -95,14 +95,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
+
         String message = ex.getBindingResult().getAllErrors().stream()
                 .map(error -> {
-                    if (error instanceof FieldError) {
-                        return ((FieldError) error).getField() + ": " + error.getDefaultMessage();
+                    if (error instanceof FieldError fe) {   // ⭐ Java 17 pattern matching
+                        return fe.getField() + ": " + error.getDefaultMessage();
                     }
                     return error.getDefaultMessage();
                 })
                 .collect(Collectors.joining(", "));
+
+
 
         log.error("Validation failed: {}", message);
         ErrorResponse error = ErrorResponse.builder()
