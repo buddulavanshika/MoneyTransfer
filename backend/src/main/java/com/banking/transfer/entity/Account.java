@@ -44,7 +44,7 @@ public class Account {
     private LocalDateTime lastUpdated;
 
     @PrePersist
-    private void prePersist() {
+    void prePersist() {
         if (this.id == null) {
             this.id = "ACC-" + System.currentTimeMillis();
         }
