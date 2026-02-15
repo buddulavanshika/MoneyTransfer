@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,6 +22,7 @@ import { AccountResponse } from '../../core/models/account.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -43,6 +44,8 @@ export class Transfer implements OnInit {
   successMessage = '';
   errorMessage = '';
   formSubmitted = false; // 🔥 important
+  /** True when the failed transfer was recorded in transaction history (404, 403, 400) */
+  failedTransferRecorded = false;
 
   constructor(
     private fb: FormBuilder,
@@ -89,6 +92,7 @@ export class Transfer implements OnInit {
 
     this.formSubmitted = true; // 🔥 trigger validation
     this.clearMessages();
+    this.failedTransferRecorded = false;
 
     // show validation instantly
     this.transferForm.markAllAsTouched();
@@ -109,11 +113,6 @@ export class Transfer implements OnInit {
 
     if (toAccountId === this.currentAccount.id) {
       this.errorMessage = 'Cannot transfer to the same account';
-      return;
-    }
-
-    if (this.transferForm.value.amount > this.currentAccount.balance) {
-      this.errorMessage = 'Insufficient balance for this transfer';
       return;
     }
 
@@ -147,6 +146,8 @@ export class Transfer implements OnInit {
         this.submitting = false;
         this.errorMessage =
           error.error?.message || 'Transfer failed. Please try again.';
+        // Backend records failed transactions for 404 (not found), 403 (not active), 400 (insufficient balance)
+        this.failedTransferRecorded = [400, 403, 404].includes(error.status);
       }
     });
   }

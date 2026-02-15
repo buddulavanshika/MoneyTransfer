@@ -23,6 +23,7 @@ public class TransferService {
 
     private final AccountRepository accountRepository;
     private final TransactionLogRepository transactionLogRepository;
+    private final TransactionLogService transactionLogService;
 
     @Transactional
     public TransferResponse transfer(TransferRequest request) {
@@ -92,18 +93,15 @@ public class TransferService {
                     .amount(request.getAmount())
                     .build();
 
-        } catch (Exception e) {
-            // Log failed transaction
-            TransactionLog failedLog = TransactionLog.builder()
-                    .fromAccountId(request.getFromAccountId())
-                    .toAccountId(request.getToAccountId())
-                    .amount(request.getAmount())
-                    .status(TransactionStatus.FAILED)
-                    .failureReason(e.getMessage())
-                    .idempotencyKey(request.getIdempotencyKey())
-                    .build();
-
-            transactionLogRepository.save(failedLog);
+        } catch (AccountNotFoundException | AccountNotActiveException | InsufficientBalanceException e) {
+            // Record failed transaction in separate transaction (REQUIRES_NEW) so it persists
+            // even when this transaction rolls back
+            transactionLogService.saveFailedTransaction(
+                    request.getFromAccountId(),
+                    request.getToAccountId(),
+                    request.getAmount(),
+                    e.getMessage(),
+                    request.getIdempotencyKey());
 
             log.error("Transfer failed: {}", e.getMessage());
             throw e;

@@ -33,6 +33,9 @@ class TransferServiceTest {
     @Mock
     private TransactionLogRepository transactionLogRepository;
 
+    @Mock
+    private TransactionLogService transactionLogService;
+
     @InjectMocks
     private TransferService transferService;
 
@@ -102,7 +105,7 @@ class TransferServiceTest {
     }
 
     @Test
-    void transfer_InsufficientBalance_ThrowsException() {
+    void transfer_InsufficientBalance_ThrowsException_AndRecordsFailedTransaction() {
         // Arrange
         transferRequest.setAmount(new BigDecimal("10000.00")); // More than balance
 
@@ -119,6 +122,9 @@ class TransferServiceTest {
 
         verify(transactionLogRepository, times(1)).findByIdempotencyKey("txn-001");
         verify(accountRepository, never()).save(any(Account.class));
+        verify(transactionLogService, times(1)).saveFailedTransaction(
+                eq("ACC-1"), eq("ACC-2"), eq(new BigDecimal("10000.00")),
+                argThat(msg -> msg != null && msg.contains("Insufficient balance")), eq("txn-001"));
     }
 
     @Test
@@ -156,7 +162,7 @@ class TransferServiceTest {
     }
 
     @Test
-    void transfer_FromAccountNotFound_ThrowsException() {
+    void transfer_FromAccountNotFound_ThrowsException_AndRecordsFailedTransaction() {
         // Arrange
         when(transactionLogRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(accountRepository.findById("ACC-1")).thenReturn(Optional.empty());
@@ -170,5 +176,8 @@ class TransferServiceTest {
 
         verify(accountRepository, times(1)).findById("ACC-1");
         verify(accountRepository, never()).save(any(Account.class));
+        verify(transactionLogService, times(1)).saveFailedTransaction(
+                eq("ACC-1"), eq("ACC-2"), eq(new BigDecimal("500.00")),
+                argThat(msg -> msg != null && msg.contains("not found")), eq("txn-001"));
     }
 }
